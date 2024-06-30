@@ -85,6 +85,7 @@ impl From<BasicPinShape> for PinShape {
 ///
 /// All fields are optional.
 /// If a field is `None`, the default value is used derived from the graph style.
+#[derive(Default)]
 pub struct PinInfo {
     /// Shape of the pin.
     pub shape: Option<PinShape>,
@@ -102,17 +103,6 @@ pub struct PinInfo {
     pub wire_style: Option<WireStyle>,
 }
 
-impl Default for PinInfo {
-    fn default() -> Self {
-        PinInfo {
-            shape: None,
-            size: None,
-            fill: None,
-            stroke: None,
-            wire_style: None,
-        }
-    }
-}
 
 impl PinInfo {
     /// Sets the shape of the pin.
@@ -211,8 +201,8 @@ pub fn draw_pin(
             painter.add(Shape::Path(PathShape {
                 points,
                 closed: true,
-                fill: fill,
-                stroke: stroke,
+                fill,
+                stroke,
             }));
         }
         PinShape::Square => {
@@ -226,8 +216,8 @@ pub fn draw_pin(
             painter.add(Shape::Path(PathShape {
                 points,
                 closed: true,
-                fill: fill,
-                stroke: stroke,
+                fill,
+                stroke,
             }));
         }
 

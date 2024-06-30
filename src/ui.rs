@@ -862,24 +862,22 @@ impl<T> Snarl<T> {
                             );
                         });
                     }
-                } else {
-                    if snarl_state.is_link_menu_open() || viewer.has_graph_menu(interact_pos, self)
-                    {
-                        bg_r.context_menu(|ui| {
-                            is_menu_visible = true;
-                            if !snarl_state.is_link_menu_open() {
-                                // Mark link menu is now visible.
-                                snarl_state.open_link_menu();
-                            }
+                } else if snarl_state.is_link_menu_open() || viewer.has_graph_menu(interact_pos, self)
+                {
+                    bg_r.context_menu(|ui| {
+                        is_menu_visible = true;
+                        if !snarl_state.is_link_menu_open() {
+                            // Mark link menu is now visible.
+                            snarl_state.open_link_menu();
+                        }
 
-                            viewer.show_graph_menu(
-                                snarl_state.screen_pos_to_graph(ui.cursor().min, viewport),
-                                ui,
-                                snarl_state.scale(),
-                                self,
-                            );
-                        });
-                    }
+                        viewer.show_graph_menu(
+                            snarl_state.screen_pos_to_graph(ui.cursor().min, viewport),
+                            ui,
+                            snarl_state.scale(),
+                            self,
+                        );
+                    });
                 }
             }
 
