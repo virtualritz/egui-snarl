@@ -357,7 +357,7 @@ impl<T> Snarl<T> {
 
     /// Returns reference to the node.
     #[must_use]
-    pub fn get_node(&self, idx: NodeId) -> Option<&T> {
+    pub fn node(&self, idx: NodeId) -> Option<&T> {
         match self.nodes.get(idx.0) {
             Some(node) => Some(&node.value),
             None => None,
@@ -365,7 +365,7 @@ impl<T> Snarl<T> {
     }
 
     /// Returns mutable reference to the node.
-    pub fn get_node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
+    pub fn node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
         match self.nodes.get_mut(idx.0) {
             Some(node) => Some(&mut node.value),
             None => None,

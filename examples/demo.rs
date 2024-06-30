@@ -515,7 +515,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
                 );
 
                 let src_pin = src_pins[0];
-                let src_out_ty = pin_out_compat(snarl.get_node(src_pin.node).unwrap());
+                let src_out_ty = pin_out_compat(snarl.node(src_pin.node).unwrap());
                 let dst_in_candidates = [
                     ("Sink", (|| DemoNode::Sink) as fn() -> DemoNode, PIN_SINK),
                     ("Show Image", || DemoNode::ShowImage("".to_owned()), PIN_STR),
@@ -541,7 +541,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
             }
             AnyPins::In(pins) => {
                 let all_src_types = pins.iter().fold(0, |acc, pin| {
-                    acc | pin_in_compat(snarl.get_node(pin.node).unwrap(), pin.input)
+                    acc | pin_in_compat(snarl.node(pin.node).unwrap(), pin.input)
                 });
 
                 let dst_out_candidates = [
@@ -571,7 +571,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
                             // Connect the wire.
                             for src_pin in pins {
                                 let src_ty = pin_in_compat(
-                                    snarl.get_node(src_pin.node).unwrap(),
+                                    snarl.node(src_pin.node).unwrap(),
                                     src_pin.input,
                                 );
                                 if src_ty & dst_ty != 0 {
