@@ -1,8 +1,7 @@
-use egui::{epaint::PathShape, vec2, Color32, Painter, Pos2, Rect, Shape, Stroke, Vec2};
-
+use super::WireStyle;
 use crate::{InPinId, OutPinId};
 
-use super::WireStyle;
+use egui::{epaint::PathShape, vec2, Color32, Painter, Pos2, Rect, Shape, Stroke, Vec2};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum AnyPin {

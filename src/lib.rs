@@ -355,75 +355,69 @@ impl<T> Snarl<T> {
         self.wires.drop_outputs(pin)
     }
 
-    /// Returns reference to the node.
+    /// Returns a reference to the node.
     #[must_use]
     pub fn node(&self, idx: NodeId) -> Option<&T> {
-        match self.nodes.get(idx.0) {
-            Some(node) => Some(&node.value),
-            None => None,
-        }
+        self.nodes.get(idx.0).map(|node| &node.value)
     }
 
-    /// Returns mutable reference to the node.
+    /// Returns a mutable reference to the node.
     pub fn node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
-        match self.nodes.get_mut(idx.0) {
-            Some(node) => Some(&mut node.value),
-            None => None,
-        }
+        self.nodes.get_mut(idx.0).map(|node| &mut node.value)
     }
 
-    /// Iterates over shared references to each node.
-    pub fn nodes(&self) -> NodesIter<'_, T> {
-        NodesIter {
+    /// Returns an iterator over shared references to each node.
+    pub fn node_iter(&self) -> NodeIter<'_, T> {
+        NodeIter {
             nodes: self.nodes.iter(),
         }
     }
 
     /// Iterates over mutable references to each node.
-    pub fn nodes_mut(&mut self) -> NodesIterMut<'_, T> {
-        NodesIterMut {
+    pub fn node_iter_mut(&mut self) -> NodeIterMut<'_, T> {
+        NodeIterMut {
             nodes: self.nodes.iter_mut(),
         }
     }
 
     /// Iterates over shared references to each node and its position.
-    pub fn nodes_pos(&self) -> NodesPosIter<'_, T> {
-        NodesPosIter {
+    pub fn node_pos_iter(&self) -> NodePosIter<'_, T> {
+        NodePosIter {
             nodes: self.nodes.iter(),
         }
     }
 
     /// Iterates over mutable references to each node and its position.
-    pub fn nodes_pos_mut(&mut self) -> NodesPosIterMut<'_, T> {
-        NodesPosIterMut {
+    pub fn node_pos_iter_mut(&mut self) -> NodePosIterMut<'_, T> {
+        NodePosIterMut {
             nodes: self.nodes.iter_mut(),
         }
     }
 
     /// Iterates over shared references to each node and its identifier.
-    pub fn node_ids(&self) -> NodesIdsIter<'_, T> {
-        NodesIdsIter {
+    pub fn node_id_iter(&self) -> NodeIdIter<'_, T> {
+        NodeIdIter {
             nodes: self.nodes.iter(),
         }
     }
 
     /// Iterates over mutable references to each node and its identifier.
-    pub fn nodes_ids_mut(&mut self) -> NodesIdsIterMut<'_, T> {
-        NodesIdsIterMut {
+    pub fn node_ids_iter_mut(&mut self) -> NodeIdIterMut<'_, T> {
+        NodeIdIterMut {
             nodes: self.nodes.iter_mut(),
         }
     }
 
     /// Iterates over shared references to each node, its position and its identifier.
-    pub fn nodes_pos_ids(&self) -> NodesPosIdsIter<'_, T> {
-        NodesPosIdsIter {
+    pub fn node_pos_id_iter(&self) -> NodePosIdIter<'_, T> {
+        NodePosIdIter {
             nodes: self.nodes.iter(),
         }
     }
 
     /// Iterates over mutable references to each node, its position and its identifier.
-    pub fn nodes_pos_ids_mut(&mut self) -> NodesPosIdsIterMut<'_, T> {
-        NodesPosIdsIterMut {
+    pub fn node_pos_id_iter_mut(&mut self) -> NodePosIdIterMut<'_, T> {
+        NodePosIdIterMut {
             nodes: self.nodes.iter_mut(),
         }
     }
@@ -466,11 +460,11 @@ impl<T> IndexMut<NodeId> for Snarl<T> {
 
 /// Iterator over shared references to nodes.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesIter<'a, T> {
+pub struct NodeIter<'a, T> {
     nodes: slab::Iter<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesIter<'a, T> {
+impl<'a, T> Iterator for NodeIter<'a, T> {
     type Item = &'a T;
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -490,11 +484,11 @@ impl<'a, T> Iterator for NodesIter<'a, T> {
 
 /// Iterator over mutable references to nodes.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesIterMut<'a, T> {
+pub struct NodeIterMut<'a, T> {
     nodes: slab::IterMut<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesIterMut<'a, T> {
+impl<'a, T> Iterator for NodeIterMut<'a, T> {
     type Item = &'a mut T;
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -514,11 +508,11 @@ impl<'a, T> Iterator for NodesIterMut<'a, T> {
 
 /// Iterator over shared references to nodes and their positions.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesPosIter<'a, T> {
+pub struct NodePosIter<'a, T> {
     nodes: slab::Iter<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesPosIter<'a, T> {
+impl<'a, T> Iterator for NodePosIter<'a, T> {
     type Item = (Pos2, &'a T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -538,11 +532,11 @@ impl<'a, T> Iterator for NodesPosIter<'a, T> {
 
 /// Iterator over mutable references to nodes and their positions.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesPosIterMut<'a, T> {
+pub struct NodePosIterMut<'a, T> {
     nodes: slab::IterMut<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesPosIterMut<'a, T> {
+impl<'a, T> Iterator for NodePosIterMut<'a, T> {
     type Item = (Pos2, &'a mut T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -562,11 +556,11 @@ impl<'a, T> Iterator for NodesPosIterMut<'a, T> {
 
 /// Iterator over shared references to nodes and their identifiers.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesIdsIter<'a, T> {
+pub struct NodeIdIter<'a, T> {
     nodes: slab::Iter<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesIdsIter<'a, T> {
+impl<'a, T> Iterator for NodeIdIter<'a, T> {
     type Item = (NodeId, &'a T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -586,11 +580,11 @@ impl<'a, T> Iterator for NodesIdsIter<'a, T> {
 
 /// Iterator over mutable references to nodes and their identifiers.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesIdsIterMut<'a, T> {
+pub struct NodeIdIterMut<'a, T> {
     nodes: slab::IterMut<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesIdsIterMut<'a, T> {
+impl<'a, T> Iterator for NodeIdIterMut<'a, T> {
     type Item = (NodeId, &'a mut T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -610,11 +604,11 @@ impl<'a, T> Iterator for NodesIdsIterMut<'a, T> {
 
 /// Iterator over shared references to nodes, their positions and their identifiers.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesPosIdsIter<'a, T> {
+pub struct NodePosIdIter<'a, T> {
     nodes: slab::Iter<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesPosIdsIter<'a, T> {
+impl<'a, T> Iterator for NodePosIdIter<'a, T> {
     type Item = (NodeId, Pos2, &'a T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -634,11 +628,11 @@ impl<'a, T> Iterator for NodesPosIdsIter<'a, T> {
 
 /// Iterator over mutable references to nodes, their positions and their identifiers.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
-pub struct NodesPosIdsIterMut<'a, T> {
+pub struct NodePosIdIterMut<'a, T> {
     nodes: slab::IterMut<'a, Node<T>>,
 }
 
-impl<'a, T> Iterator for NodesPosIdsIterMut<'a, T> {
+impl<'a, T> Iterator for NodePosIdIterMut<'a, T> {
     type Item = (NodeId, Pos2, &'a mut T);
 
     fn size_hint(&self) -> (usize, Option<usize>) {

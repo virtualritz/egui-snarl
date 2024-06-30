@@ -1,8 +1,8 @@
-use std::cell::RefCell;
+use crate::{wire_pins, InPinId, Node, OutPinId, Snarl};
 
 use egui::Pos2;
 
-use crate::{wire_pins, InPinId, Node, OutPinId, Snarl};
+use std::cell::RefCell;
 
 pub enum Effect<T> {
     /// Adds a new node to the Snarl.

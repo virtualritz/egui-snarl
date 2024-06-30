@@ -1,8 +1,8 @@
-use std::fmt;
+use super::SnarlStyle;
 
 use egui::{emath::Rot2, vec2, Pos2, Rect, Ui, Vec2};
 
-use super::SnarlStyle;
+use std::fmt;
 
 /// Viewport is a rectangle in graph space that is visible on screen.
 pub struct Viewport {
@@ -169,7 +169,7 @@ impl<const INLINE_SIZE: usize> egui_probe::EguiProbe for CustomBackground<'_, IN
     }
 }
 
-/// Background pattern show beneath nodes and wires.
+/// Background pattern shown beneath nodes and wires.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "egui-probe", derive(egui_probe::EguiProbe))]
 pub enum BackgroundPattern {

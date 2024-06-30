@@ -1,13 +1,14 @@
-//! This module provides functionality for showing [`Snarl`] graph in [`Ui`].
+//! This module provides functionality for displaying a [`Snarl`] graph in an `egui::Ui`.
 
-use std::{collections::HashMap, hash::Hash};
+use crate::{InPin, InPinId, Node, NodeId, OutPin, OutPinId, Snarl};
 
+use ahash::AHashMap as HashMap;
 use egui::{
     collapsing_header::paint_default_icon, epaint::Shadow, pos2, vec2, Align, Color32, Frame, Id,
     Layout, Margin, Modifiers, PointerButton, Pos2, Rect, Rounding, Sense, Shape, Stroke, Ui, Vec2,
 };
 
-use crate::{InPin, InPinId, Node, NodeId, OutPin, OutPinId, Snarl};
+use std::hash::Hash;
 
 mod background_pattern;
 mod pin;

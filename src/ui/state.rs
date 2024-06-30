@@ -1,8 +1,7 @@
-use egui::{ahash::HashSet, style::Spacing, Align, Context, Id, Pos2, Rect, Vec2};
-
+use super::SnarlStyle;
 use crate::{InPinId, NodeId, OutPinId, Snarl};
 
-use super::SnarlStyle;
+use egui::{ahash::HashSet, style::Spacing, Align, Context, Id, Pos2, Rect, Vec2};
 
 /// Node UI state.
 

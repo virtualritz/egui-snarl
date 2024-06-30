@@ -1,10 +1,10 @@
+use super::{SelectionStyle, WireStyle};
+
 use egui::{
     epaint::Shadow,
     style::{Interaction, ScrollStyle, Spacing, WidgetVisuals, Widgets},
     FontId, Frame, Margin, Rounding, Stroke, Style, Vec2, Visuals,
 };
-
-use super::{SelectionStyle, WireStyle};
 
 pub trait Zoom {
     #[inline(always)]

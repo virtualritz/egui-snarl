@@ -1,5 +1,3 @@
-use std::f32;
-
 use egui::{epaint::PathShape, pos2, Color32, Pos2, Rect, Shape, Stroke, Ui};
 
 /// Layer where wires are rendered.
@@ -17,7 +15,7 @@ pub enum WireLayer {
     AboveNodes,
 }
 
-/// Controls style in which wire is rendered.
+/// Wire rendering style.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "egui-probe", derive(egui_probe::EguiProbe))]
@@ -80,7 +78,7 @@ fn adjust_frame_size(
     frame_size
 }
 
-/// Returns 5th degree bezier curve control points for the wire
+/// Returns 5th degree bezier curve control points for the wire.
 fn wire_bezier_5(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 6] {
     let from_norm_x = frame_size;
     let from_2 = pos2(from.x + from_norm_x, from.y);

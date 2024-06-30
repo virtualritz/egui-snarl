@@ -1,8 +1,7 @@
-use egui::{Pos2, Rect, Ui};
-
+use super::pin::{AnyPins, PinInfo};
 use crate::{InPin, InPinId, NodeId, OutPin, OutPinId, Snarl};
 
-use super::pin::{AnyPins, PinInfo};
+use egui::{Pos2, Rect, Ui};
 
 /// SnarlViewer is a trait for viewing a Snarl.
 ///
