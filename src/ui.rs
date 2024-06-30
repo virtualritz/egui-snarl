@@ -862,7 +862,8 @@ impl<T> Snarl<T> {
                             );
                         });
                     }
-                } else if snarl_state.is_link_menu_open() || viewer.has_graph_menu(interact_pos, self)
+                } else if snarl_state.is_link_menu_open()
+                    || viewer.has_graph_menu(interact_pos, self)
                 {
                     bg_r.context_menu(|ui| {
                         is_menu_visible = true;

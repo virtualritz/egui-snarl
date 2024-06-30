@@ -570,10 +570,8 @@ impl SnarlViewer<DemoNode> for DemoViewer {
 
                             // Connect the wire.
                             for src_pin in pins {
-                                let src_ty = pin_in_compat(
-                                    snarl.node(src_pin.node).unwrap(),
-                                    src_pin.input,
-                                );
+                                let src_ty =
+                                    pin_in_compat(snarl.node(src_pin.node).unwrap(), src_pin.input);
                                 if src_ty & dst_ty != 0 {
                                     // In this demo, input pin MUST be unique ...
                                     // Therefore here we drop inputs of source input pin.

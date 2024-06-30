@@ -103,7 +103,6 @@ pub struct PinInfo {
     pub wire_style: Option<WireStyle>,
 }
 
-
 impl PinInfo {
     /// Sets the shape of the pin.
     pub fn with_shape(mut self, shape: PinShape) -> Self {

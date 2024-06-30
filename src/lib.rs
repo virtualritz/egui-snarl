@@ -236,7 +236,7 @@ impl<T> Snarl<T> {
             pos,
             open: true,
         });
-        
+
         NodeId(idx)
     }
 
@@ -256,7 +256,7 @@ impl<T> Snarl<T> {
             pos,
             open: false,
         });
-        
+
         NodeId(idx)
     }
 
