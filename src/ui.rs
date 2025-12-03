@@ -1311,26 +1311,33 @@ where
     }
 
     if let Some(select_rect) = rect_selection_ended {
-        let select_nodes = node_rects.into_iter().filter_map(|(id, rect)| {
-            let select = if style.get_select_rect_contained() {
-                select_rect.contains_rect(rect)
-            } else {
-                select_rect.intersects(rect)
-            };
+        let mut select_nodes: Vec<NodeId> = node_rects
+            .into_iter()
+            .filter_map(|(id, rect)| {
+                let select = if style.get_select_rect_contained() {
+                    select_rect.contains_rect(rect)
+                } else {
+                    select_rect.intersects(rect)
+                };
 
-            if select { Some(id) } else { None }
-        });
+                if select { Some(id) } else { None }
+            })
+            .collect();
+
+        // In single_select mode, only select one node (the last one found)
+        if config.single_select && select_nodes.len() > 1 {
+            select_nodes = select_nodes.into_iter().last().into_iter().collect();
+        }
 
         if input
             .modifiers
             .contains(config.deselect_all_nodes.modifiers)
         {
-            snarl_state.deselect_many_nodes(select_nodes);
+            snarl_state.deselect_many_nodes(select_nodes.into_iter());
         } else {
-            snarl_state.select_many_nodes(
-                !input.modifiers.contains(config.rect_select.modifiers),
-                select_nodes,
-            );
+            // In single_select mode, always reset (clear previous selection)
+            let reset = config.single_select || !input.modifiers.contains(config.rect_select.modifiers);
+            snarl_state.select_many_nodes(reset, select_nodes.into_iter());
         }
     }
 
@@ -2085,7 +2092,9 @@ where
 
     if r.clicked_by(config.click_node.mouse_button) || r.dragged_by(config.drag_node.mouse_button) {
         if modifiers.contains(config.select_node.modifiers) {
-            snarl_state.select_one_node(modifiers.command, node);
+            // In single_select mode, always clear previous selection
+            let reset = config.single_select || modifiers.command;
+            snarl_state.select_one_node(reset, node);
         } else if modifiers.contains(config.deselect_node.modifiers) {
             snarl_state.deselect_one_node(node);
         }

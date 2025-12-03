@@ -65,6 +65,11 @@ pub struct SnarlConfig {
     /// Defaults to [`PointerButton::Primary`].
     pub click_header: ModifierClick,
 
+    /// When true, only a single node can be selected at a time.
+    /// Clicking a node will deselect any previously selected nodes.
+    /// Defaults to `false`.
+    pub single_select: bool,
+
     #[doc(hidden)]
     #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
     /// Do not access other than with .., here to emulate `#[non_exhaustive(pub)]`
@@ -130,6 +135,8 @@ impl SnarlConfig {
                 modifiers: Modifiers::NONE,
                 mouse_button: PointerButton::Primary,
             },
+
+            single_select: false,
 
             _non_exhaustive: (),
         }

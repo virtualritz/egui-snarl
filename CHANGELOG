@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Snarl::disconnect_all(node_id)` method to remove all connections to and from a node.
 - `Effects::disconnect_all(node_id)` for deferred disconnection of all node wires.
 - `SnarlViewer::node_moved` callback invoked when a node is dragged to a new position.
+- `SnarlConfig::single_select` option to limit selection to a single node at a time.
 
 ### Changed
 
