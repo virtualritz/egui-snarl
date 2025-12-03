@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SnarlViewer::node_moved` callback invoked when a node is dragged to a new position.
 - `SnarlConfig::single_select` option to limit selection to a single node at a time.
 - `SnarlConfig::grid_snap` option for snapping node positions to a grid.
+- `SnarlViewer::show_header_buttons` method for adding buttons/flags to node headers (Houdini-style).
 
 ### Changed
 
+- `SnarlViewer::show_header` now uses horizontal layout with title on left and header buttons on right.
 - Collapsed nodes now shrink their width to match the header width instead of retaining full content width.
 - Snarl is now scaled using egui's layer scaling mechanism.
   Removes layout twitching when zooming in and out.

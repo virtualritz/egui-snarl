@@ -105,7 +105,8 @@ pub trait SnarlViewer<T> {
     ///
     /// This is the good place to show the node's title and controls related to the whole node.
     ///
-    /// By default it shows the node's title.
+    /// By default it shows the node's title on the left and calls [`show_header_buttons`]
+    /// on the right side.
     #[inline]
     fn show_header(
         &mut self,
@@ -115,8 +116,30 @@ pub trait SnarlViewer<T> {
         ui: &mut Ui,
         snarl: &mut Snarl<T>,
     ) {
-        let _ = (inputs, outputs);
-        ui.label(self.title(&snarl[node]));
+        ui.horizontal(|ui| {
+            ui.label(self.title(&snarl[node]));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                self.show_header_buttons(node, inputs, outputs, ui, snarl);
+            });
+        });
+    }
+
+    /// Renders buttons/icons in the node's header (right side by default).
+    ///
+    /// Override this method to add custom buttons, flags, or status icons to nodes.
+    /// This is useful for Houdini-style node flags (template, preview, bypass, etc.).
+    ///
+    /// By default this method does nothing.
+    #[inline]
+    fn show_header_buttons(
+        &mut self,
+        node: NodeId,
+        inputs: &[InPin],
+        outputs: &[OutPin],
+        ui: &mut Ui,
+        snarl: &mut Snarl<T>,
+    ) {
+        let _ = (node, inputs, outputs, ui, snarl);
     }
 
     /// Returns number of input pins of the node.
