@@ -1653,15 +1653,18 @@ where
                 ));
             }
 
-            let y0 = pin_ui.max_rect().min.y;
-            let y1 = pin_ui.max_rect().max.y;
-
             // Show input content
             let snarl_pin = viewer.show_input(in_pin, pin_ui, snarl);
             if !snarl.nodes.contains(node.0) {
                 // If removed
                 return;
             }
+
+            // Use min_rect after content is shown to get actual content bounds.
+            // This ensures pin is aligned with actual content, not pre-allocated space.
+            let content_rect = pin_ui.min_rect();
+            let y0 = content_rect.min.y;
+            let y1 = content_rect.max.y;
 
             let pin_rect = snarl_pin.pin_rect(
                 input_x,
@@ -1817,15 +1820,18 @@ where
                 ));
             }
 
-            let y0 = pin_ui.max_rect().min.y;
-            let y1 = pin_ui.max_rect().max.y;
-
             // Show output content
             let snarl_pin = viewer.show_output(out_pin, pin_ui, snarl);
             if !snarl.nodes.contains(node.0) {
                 // If removed
                 return;
             }
+
+            // Use min_rect after content is shown to get actual content bounds.
+            // This ensures pin is aligned with actual content, not pre-allocated space.
+            let content_rect = pin_ui.min_rect();
+            let y0 = content_rect.min.y;
+            let y1 = content_rect.max.y;
 
             let pin_rect = snarl_pin.pin_rect(
                 output_x,
