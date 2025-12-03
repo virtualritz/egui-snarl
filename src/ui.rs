@@ -1627,6 +1627,9 @@ where
         }
     }
 
+    // Draw foreground elements (comments, annotations, overlays)
+    viewer.draw_foreground(&viewport, &style, ui.style(), ui.painter(), snarl);
+
     snarl_state.store(snarl, ui.ctx());
 
     snarl_resp

@@ -359,6 +359,7 @@ pub trait SnarlViewer<T> {
     /// By default it draws the background pattern using [`BackgroundPattern::draw`].
     ///
     /// If you want to draw the background yourself, you can override this method.
+    /// This is also a good place to draw grouping rectangles behind nodes.
     #[inline]
     fn draw_background(
         &mut self,
@@ -374,6 +375,24 @@ pub trait SnarlViewer<T> {
         if let Some(background) = background {
             background.draw(viewport, snarl_style, style, painter);
         }
+    }
+
+    /// Draws foreground elements on top of nodes and wires.
+    ///
+    /// Override this method to draw comments, annotations, overlays, or any
+    /// custom elements that should appear on top of the graph.
+    ///
+    /// By default this method does nothing.
+    #[inline]
+    fn draw_foreground(
+        &mut self,
+        viewport: &Rect,
+        snarl_style: &SnarlStyle,
+        style: &Style,
+        painter: &Painter,
+        snarl: &Snarl<T>,
+    ) {
+        let _ = (viewport, snarl_style, style, painter, snarl);
     }
 
     /// Informs the viewer what is the current transform of the snarl view
