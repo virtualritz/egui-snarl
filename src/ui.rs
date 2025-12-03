@@ -34,7 +34,7 @@ use self::{
 
 pub use self::{
     background_pattern::{BackgroundPattern, Grid},
-    config::{ModifierClick, SnarlConfig},
+    config::{ModifierClick, SnapGrid, SnapGridType, SnarlConfig},
     pin::{AnyPins, PinInfo, PinShape, PinWireInfo, SnarlPin},
     state::get_selected_nodes,
     viewer::SnarlViewer,
@@ -1127,6 +1127,11 @@ where
         snarl,
     );
 
+    // Draw snap grid if visible
+    if let Some(ref grid) = config.grid_snap {
+        grid.draw(&viewport, ui.painter());
+    }
+
     let mut node_moved = None;
     let mut node_to_top = None;
 
@@ -1609,11 +1614,8 @@ where
 
             // Helper to snap position to grid if enabled
             let snap_to_grid = |pos: Pos2| -> Pos2 {
-                if let Some(grid_size) = config.grid_snap {
-                    Pos2::new(
-                        (pos.x / grid_size).round() * grid_size,
-                        (pos.y / grid_size).round() * grid_size,
-                    )
+                if let Some(ref grid) = config.grid_snap {
+                    grid.snap(pos)
                 } else {
                     pos
                 }

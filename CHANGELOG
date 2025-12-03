@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Effects::disconnect_all(node_id)` for deferred disconnection of all node wires.
 - `SnarlViewer::node_moved` callback invoked when a node is dragged to a new position.
 - `SnarlConfig::single_select` option to limit selection to a single node at a time.
-- `SnarlConfig::grid_snap` option for snapping node positions to a grid.
+- `SnapGrid` and `SnapGridType` types for configurable snap grids with quad and hex (pointy/flat) variants.
+- `SnarlConfig::grid_snap` now accepts `Option<SnapGrid>` for full grid configuration including type and visibility.
 - `SnarlViewer::show_header_buttons` method for adding buttons/flags to node headers (Houdini-style).
 - `SnarlViewer::draw_foreground` method for drawing comments, annotations, and overlays on top of the graph.
 - `SnarlViewer::wire_waypoints` method for specifying custom wire routing waypoints.
