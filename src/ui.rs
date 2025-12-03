@@ -1596,16 +1596,31 @@ where
     if let Some((node, delta)) = node_moved {
         if snarl.nodes.contains(node.0) {
             ui.ctx().request_repaint();
+
+            // Helper to snap position to grid if enabled
+            let snap_to_grid = |pos: Pos2| -> Pos2 {
+                if let Some(grid_size) = config.grid_snap {
+                    Pos2::new(
+                        (pos.x / grid_size).round() * grid_size,
+                        (pos.y / grid_size).round() * grid_size,
+                    )
+                } else {
+                    pos
+                }
+            };
+
             if snarl_state.selected_nodes().contains(&node) {
                 for node_id in snarl_state.selected_nodes() {
                     let node_data = &mut snarl.nodes[node_id.0];
                     node_data.pos += delta;
+                    node_data.pos = snap_to_grid(node_data.pos);
                     let new_pos = node_data.pos;
                     viewer.node_moved(*node_id, new_pos, snarl);
                 }
             } else {
                 let node_data = &mut snarl.nodes[node.0];
                 node_data.pos += delta;
+                node_data.pos = snap_to_grid(node_data.pos);
                 let new_pos = node_data.pos;
                 viewer.node_moved(node, new_pos, snarl);
             }

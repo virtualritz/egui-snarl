@@ -70,6 +70,12 @@ pub struct SnarlConfig {
     /// Defaults to `false`.
     pub single_select: bool,
 
+    /// Grid size for snapping node positions.
+    /// When `Some(size)`, nodes will snap to a grid with the specified cell size.
+    /// Set to `None` to disable grid snapping.
+    /// Defaults to `None`.
+    pub grid_snap: Option<f32>,
+
     #[doc(hidden)]
     #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
     /// Do not access other than with .., here to emulate `#[non_exhaustive(pub)]`
@@ -137,6 +143,8 @@ impl SnarlConfig {
             },
 
             single_select: false,
+
+            grid_snap: None,
 
             _non_exhaustive: (),
         }

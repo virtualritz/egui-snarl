@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Effects::disconnect_all(node_id)` for deferred disconnection of all node wires.
 - `SnarlViewer::node_moved` callback invoked when a node is dragged to a new position.
 - `SnarlConfig::single_select` option to limit selection to a single node at a time.
+- `SnarlConfig::grid_snap` option for snapping node positions to a grid.
 
 ### Changed
 
