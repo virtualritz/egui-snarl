@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snarl is now scaled using egui's layer scaling mechanism.
   Removes layout twitching when zooming in and out.
   Simplifies interface of `SnarlViewer`.
+- Renamed `Snarl::get_node` to `node`, `get_node_mut` to `node_mut`, `get_node_info` to `node_info`, and `get_node_info_mut` to `node_info_mut` per Rust API guidelines.
+  The old names are deprecated but still available for backwards compatibility.
 
 ## [0.7.1] - 19.02.2025
 

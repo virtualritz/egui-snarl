@@ -377,12 +377,12 @@ impl<T> Snarl<T> {
 
     /// Returns reference to the node.
     #[must_use]
-    pub fn get_node(&self, idx: NodeId) -> Option<&T> {
+    pub fn node(&self, idx: NodeId) -> Option<&T> {
         self.nodes.get(idx.0).map(|node| &node.value)
     }
 
     /// Returns mutable reference to the node.
-    pub fn get_node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
+    pub fn node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
         match self.nodes.get_mut(idx.0) {
             Some(node) => Some(&mut node.value),
             None => None,
@@ -391,13 +391,39 @@ impl<T> Snarl<T> {
 
     /// Returns reference to the node data.
     #[must_use]
-    pub fn get_node_info(&self, idx: NodeId) -> Option<&Node<T>> {
+    pub fn node_info(&self, idx: NodeId) -> Option<&Node<T>> {
         self.nodes.get(idx.0)
     }
 
     /// Returns mutable reference to the node data.
-    pub fn get_node_info_mut(&mut self, idx: NodeId) -> Option<&mut Node<T>> {
+    pub fn node_info_mut(&mut self, idx: NodeId) -> Option<&mut Node<T>> {
         self.nodes.get_mut(idx.0)
+    }
+
+    /// Deprecated: Use [`node`](Self::node) instead.
+    #[deprecated(since = "0.8.0", note = "renamed to `node` per Rust API guidelines")]
+    #[must_use]
+    pub fn get_node(&self, idx: NodeId) -> Option<&T> {
+        self.node(idx)
+    }
+
+    /// Deprecated: Use [`node_mut`](Self::node_mut) instead.
+    #[deprecated(since = "0.8.0", note = "renamed to `node_mut` per Rust API guidelines")]
+    pub fn get_node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
+        self.node_mut(idx)
+    }
+
+    /// Deprecated: Use [`node_info`](Self::node_info) instead.
+    #[deprecated(since = "0.8.0", note = "renamed to `node_info` per Rust API guidelines")]
+    #[must_use]
+    pub fn get_node_info(&self, idx: NodeId) -> Option<&Node<T>> {
+        self.node_info(idx)
+    }
+
+    /// Deprecated: Use [`node_info_mut`](Self::node_info_mut) instead.
+    #[deprecated(since = "0.8.0", note = "renamed to `node_info_mut` per Rust API guidelines")]
+    pub fn get_node_info_mut(&mut self, idx: NodeId) -> Option<&mut Node<T>> {
+        self.node_info_mut(idx)
     }
 
     /// Iterates over shared references to each node.
