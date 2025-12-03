@@ -352,4 +352,15 @@ pub trait SnarlViewer<T> {
     fn current_transform(&mut self, to_global: &mut TSTransform, snarl: &mut Snarl<T>) {
         let _ = (to_global, snarl);
     }
+
+    /// Allows last-minute updates to the selected nodes.
+    ///
+    /// This method is called at the beginning of graph rendering.
+    /// Return `Some(Vec<NodeId>)` to override the current selection,
+    /// or `None` to keep the current selection unchanged.
+    #[inline]
+    fn update_selection(&mut self, selected_nodes: &[NodeId]) -> Option<Vec<NodeId>> {
+        let _ = selected_nodes;
+        None
+    }
 }

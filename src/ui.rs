@@ -1035,6 +1035,12 @@ where
 
     let mut snarl_state =
         SnarlState::load(ui.ctx(), snarl_id, snarl, ui_rect, min_scale, max_scale);
+
+    // Allow viewer to update selection before rendering
+    if let Some(selection) = viewer.update_selection(snarl_state.selected_nodes()) {
+        snarl_state.select_many_nodes(true, selection.iter().cloned());
+    }
+
     let mut to_global = snarl_state.to_global();
 
     let clip_rect = ui.clip_rect();
