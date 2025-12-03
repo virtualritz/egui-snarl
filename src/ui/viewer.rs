@@ -237,6 +237,27 @@ pub trait SnarlViewer<T> {
         let _ = (node, inputs, outputs, ui, snarl);
     }
 
+    /// Returns optional waypoints for a wire to route through.
+    ///
+    /// Override this method to specify intermediate waypoints for wires,
+    /// allowing for custom wire routing (e.g., to avoid crossing other nodes).
+    ///
+    /// Note: This is a hook for future wire routing customization. Currently,
+    /// for complex wire routing, you can hide the default wire using `wire_style`
+    /// and draw custom wire segments in [`draw_foreground`].
+    ///
+    /// By default returns `None` (direct wire using default rendering).
+    #[inline]
+    fn wire_waypoints(
+        &mut self,
+        from: &OutPinId,
+        to: &InPinId,
+        snarl: &Snarl<T>,
+    ) -> Option<Vec<Pos2>> {
+        let _ = (from, to, snarl);
+        None
+    }
+
     /// Checks if wire has something to show in widget.
     /// This may not be called if wire is invisible.
     #[inline]
@@ -393,6 +414,35 @@ pub trait SnarlViewer<T> {
         snarl: &Snarl<T>,
     ) {
         let _ = (viewport, snarl_style, style, painter, snarl);
+    }
+
+    /// Called to compute automatic layout positions for nodes.
+    ///
+    /// Override this method to implement automatic layout algorithms
+    /// (e.g., force-directed, hierarchical, tree layouts).
+    ///
+    /// Return a map of node IDs to their new positions. Only nodes present
+    /// in the returned map will be repositioned.
+    ///
+    /// This method is called when [`apply_layout`](Self::apply_layout) returns true.
+    ///
+    /// By default returns an empty map (no layout changes).
+    #[inline]
+    fn compute_layout(&mut self, snarl: &Snarl<T>) -> std::collections::HashMap<NodeId, Pos2> {
+        let _ = snarl;
+        std::collections::HashMap::new()
+    }
+
+    /// Returns whether to apply automatic layout this frame.
+    ///
+    /// Override this method to trigger layout computation based on user input
+    /// (e.g., a button press) or other conditions.
+    ///
+    /// By default returns false (no automatic layout).
+    #[inline]
+    fn apply_layout(&mut self, snarl: &Snarl<T>) -> bool {
+        let _ = snarl;
+        false
     }
 
     /// Informs the viewer what is the current transform of the snarl view

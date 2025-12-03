@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SnarlConfig::grid_snap` option for snapping node positions to a grid.
 - `SnarlViewer::show_header_buttons` method for adding buttons/flags to node headers (Houdini-style).
 - `SnarlViewer::draw_foreground` method for drawing comments, annotations, and overlays on top of the graph.
+- `SnarlViewer::wire_waypoints` method for specifying custom wire routing waypoints.
+- `SnarlViewer::compute_layout` and `apply_layout` methods for implementing automatic node layout algorithms.
 
 ### Changed
 

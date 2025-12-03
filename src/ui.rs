@@ -1056,6 +1056,16 @@ where
         snarl_state.select_many_nodes(true, selection.iter().cloned());
     }
 
+    // Apply automatic layout if requested
+    if viewer.apply_layout(snarl) {
+        let layout = viewer.compute_layout(snarl);
+        for (node_id, new_pos) in layout {
+            if let Some(node) = snarl.nodes.get_mut(node_id.0) {
+                node.pos = new_pos;
+            }
+        }
+    }
+
     let mut to_global = snarl_state.to_global();
 
     let clip_rect = ui.clip_rect();
