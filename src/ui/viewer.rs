@@ -320,6 +320,17 @@ pub trait SnarlViewer<T> {
         snarl.drop_inputs(pin.id);
     }
 
+    /// Called when a node has been moved (dragged to a new position).
+    ///
+    /// This callback is invoked after the node's position has been updated in the snarl.
+    /// Override this method to react to node position changes without polling.
+    ///
+    /// The `new_pos` parameter contains the node's new position in graph coordinates.
+    #[inline]
+    fn node_moved(&mut self, node: NodeId, new_pos: Pos2, snarl: &mut Snarl<T>) {
+        let _ = (node, new_pos, snarl);
+    }
+
     /// Draws background of the snarl view.
     ///
     /// By default it draws the background pattern using [`BackgroundPattern::draw`].
