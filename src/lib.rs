@@ -363,6 +363,18 @@ impl<T> Snarl<T> {
         self.wires.drop_outputs(pin)
     }
 
+    /// Removes all connections to and from the node.
+    /// Returns number of removed connections.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the node does not exist.
+    #[track_caller]
+    pub fn disconnect_all(&mut self, node: NodeId) -> usize {
+        assert!(self.nodes.contains(node.0));
+        self.wires.drop_node(node)
+    }
+
     /// Returns reference to the node.
     #[must_use]
     pub fn get_node(&self, idx: NodeId) -> Option<&T> {

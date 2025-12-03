@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `SnarlViewer::current_transform` method to receive and possibly modify the current transform of the snarl's UI layer.
 - `SnarlStyle::pin_hover_scale` option to control or disable pin hover scaling effect. Set to `1.0` to disable hover effect.
+- `Snarl::disconnect_all(node_id)` method to remove all connections to and from a node.
+- `Effects::disconnect_all(node_id)` for deferred disconnection of all node wires.
 
 ### Changed
 
