@@ -586,6 +586,16 @@ pub struct SnarlStyle {
     #[cfg_attr(feature = "egui-probe", egui_probe(skip))]
     pub wire_widget_align: Option<Align2>,
 
+    /// Controls the scale factor for pin hover effect.
+    /// Set to 1.0 to disable the hover effect.
+    /// Defaults to 1.2 (20% larger on hover).
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip_serializing_if = "Option::is_none", default)
+    )]
+    #[cfg_attr(feature = "egui-probe", egui_probe(range = 1.0..=2.0))]
+    pub pin_hover_scale: Option<f32>,
+
     #[doc(hidden)]
     #[cfg_attr(feature = "egui-probe", egui_probe(skip))]
     #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
@@ -723,6 +733,10 @@ impl SnarlStyle {
     fn get_wire_smoothness(&self) -> f32 {
         self.wire_smoothness.unwrap_or(1.0)
     }
+
+    fn get_pin_hover_scale(&self) -> f32 {
+        self.pin_hover_scale.unwrap_or(1.2)
+    }
 }
 
 #[cfg(feature = "serde")]
@@ -811,6 +825,7 @@ impl SnarlStyle {
             wire_smoothness: None,
             wire_widget_gap: None,
             wire_widget_align: None,
+            pin_hover_scale: None,
 
             _non_exhaustive: (),
         }
@@ -1725,7 +1740,7 @@ where
                     }
                 }
                 pin_hovered = Some(AnyPin::In(in_pin.id));
-                visual_pin_rect = visual_pin_rect.scale_from_center(1.2);
+                visual_pin_rect = visual_pin_rect.scale_from_center(style.get_pin_hover_scale());
             }
 
             let wire_info =
@@ -1890,7 +1905,7 @@ where
                     }
                 }
                 pin_hovered = Some(AnyPin::Out(out_pin.id));
-                visual_pin_rect = visual_pin_rect.scale_from_center(1.2);
+                visual_pin_rect = visual_pin_rect.scale_from_center(style.get_pin_hover_scale());
             }
 
             let wire_info =
