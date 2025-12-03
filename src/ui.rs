@@ -2665,6 +2665,7 @@ where
         ui.expand_to_include_rect(header_rect);
         let header_size = header_rect.size();
         node_state.set_header_height(header_size.y);
+        node_state.set_header_width(header_size.x);
 
         node_state.set_size(vec2(
             f32::max(header_size.x, new_pins_size.x),

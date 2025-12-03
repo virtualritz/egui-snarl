@@ -19,6 +19,7 @@ pub struct NodeState {
     /// It is updated to fit content.
     size: Vec2,
     header_height: f32,
+    header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
 
@@ -30,6 +31,7 @@ pub struct NodeState {
 struct NodeData {
     size: Vec2,
     header_height: f32,
+    header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
 }
@@ -44,6 +46,7 @@ impl NodeState {
             |data| NodeState {
                 size: data.size,
                 header_height: data.header_height,
+                header_width: data.header_width,
                 input_heights: data.input_heights,
                 output_heights: data.output_heights,
                 id,
@@ -64,6 +67,7 @@ impl NodeState {
                     NodeData {
                         size: self.size,
                         header_height: self.header_height,
+                        header_width: self.header_width,
                         input_heights: self.input_heights,
                         output_heights: self.output_heights,
                     },
@@ -75,10 +79,12 @@ impl NodeState {
 
     /// Finds node rect at specific position (excluding node frame margin).
     pub fn node_rect(&self, pos: Pos2, openness: f32) -> Rect {
+        // Interpolate width between header_width (collapsed) and full size.x (open)
+        let width = self.header_width + (self.size.x - self.header_width) * openness;
         Rect::from_min_size(
             pos,
             egui::vec2(
-                self.size.x,
+                width,
                 f32::max(self.header_height, self.size.y * openness),
             ),
         )
@@ -104,6 +110,14 @@ impl NodeState {
         #[allow(clippy::float_cmp)]
         if self.header_height != height {
             self.header_height = height;
+            self.dirty = true;
+        }
+    }
+
+    pub fn set_header_width(&mut self, width: f32) {
+        #[allow(clippy::float_cmp)]
+        if self.header_width != width {
+            self.header_width = width;
             self.dirty = true;
         }
     }
@@ -136,6 +150,7 @@ impl NodeState {
         NodeState {
             size: spacing.interact_size,
             header_height: spacing.interact_size.y,
+            header_width: spacing.interact_size.x,
             input_heights: SmallVec::new_const(),
             output_heights: SmallVec::new_const(),
             id,

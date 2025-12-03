@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Collapsed nodes now shrink their width to match the header width instead of retaining full content width.
 - Snarl is now scaled using egui's layer scaling mechanism.
   Removes layout twitching when zooming in and out.
   Simplifies interface of `SnarlViewer`.
