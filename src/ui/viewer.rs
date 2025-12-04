@@ -105,7 +105,8 @@ pub trait SnarlViewer<T> {
     ///
     /// This is the good place to show the node's title and controls related to the whole node.
     ///
-    /// By default it shows the node's title.
+    /// By default it shows the node's title on the left and calls [`show_header_buttons`]
+    /// on the right side.
     #[inline]
     fn show_header(
         &mut self,
@@ -115,8 +116,30 @@ pub trait SnarlViewer<T> {
         ui: &mut Ui,
         snarl: &mut Snarl<T>,
     ) {
-        let _ = (inputs, outputs);
-        ui.label(self.title(&snarl[node]));
+        ui.horizontal(|ui| {
+            ui.label(self.title(&snarl[node]));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                self.show_header_buttons(node, inputs, outputs, ui, snarl);
+            });
+        });
+    }
+
+    /// Renders buttons/icons in the node's header (right side by default).
+    ///
+    /// Override this method to add custom buttons, flags, or status icons to nodes.
+    /// This is useful for Houdini-style node flags (template, preview, bypass, etc.).
+    ///
+    /// By default this method does nothing.
+    #[inline]
+    fn show_header_buttons(
+        &mut self,
+        node: NodeId,
+        inputs: &[InPin],
+        outputs: &[OutPin],
+        ui: &mut Ui,
+        snarl: &mut Snarl<T>,
+    ) {
+        let _ = (node, inputs, outputs, ui, snarl);
     }
 
     /// Returns number of input pins of the node.
@@ -212,6 +235,27 @@ pub trait SnarlViewer<T> {
         snarl: &mut Snarl<T>,
     ) {
         let _ = (node, inputs, outputs, ui, snarl);
+    }
+
+    /// Returns optional waypoints for a wire to route through.
+    ///
+    /// Override this method to specify intermediate waypoints for wires,
+    /// allowing for custom wire routing (e.g., to avoid crossing other nodes).
+    ///
+    /// Note: This is a hook for future wire routing customization. Currently,
+    /// for complex wire routing, you can hide the default wire using `wire_style`
+    /// and draw custom wire segments in [`draw_foreground`].
+    ///
+    /// By default returns `None` (direct wire using default rendering).
+    #[inline]
+    fn wire_waypoints(
+        &mut self,
+        from: &OutPinId,
+        to: &InPinId,
+        snarl: &Snarl<T>,
+    ) -> Option<Vec<Pos2>> {
+        let _ = (from, to, snarl);
+        None
     }
 
     /// Checks if wire has something to show in widget.
@@ -320,11 +364,23 @@ pub trait SnarlViewer<T> {
         snarl.drop_inputs(pin.id);
     }
 
+    /// Called when a node has been moved (dragged to a new position).
+    ///
+    /// This callback is invoked after the node's position has been updated in the snarl.
+    /// Override this method to react to node position changes without polling.
+    ///
+    /// The `new_pos` parameter contains the node's new position in graph coordinates.
+    #[inline]
+    fn node_moved(&mut self, node: NodeId, new_pos: Pos2, snarl: &mut Snarl<T>) {
+        let _ = (node, new_pos, snarl);
+    }
+
     /// Draws background of the snarl view.
     ///
     /// By default it draws the background pattern using [`BackgroundPattern::draw`].
     ///
     /// If you want to draw the background yourself, you can override this method.
+    /// This is also a good place to draw grouping rectangles behind nodes.
     #[inline]
     fn draw_background(
         &mut self,
@@ -340,6 +396,53 @@ pub trait SnarlViewer<T> {
         if let Some(background) = background {
             background.draw(viewport, snarl_style, style, painter);
         }
+    }
+
+    /// Draws foreground elements on top of nodes and wires.
+    ///
+    /// Override this method to draw comments, annotations, overlays, or any
+    /// custom elements that should appear on top of the graph.
+    ///
+    /// By default this method does nothing.
+    #[inline]
+    fn draw_foreground(
+        &mut self,
+        viewport: &Rect,
+        snarl_style: &SnarlStyle,
+        style: &Style,
+        painter: &Painter,
+        snarl: &Snarl<T>,
+    ) {
+        let _ = (viewport, snarl_style, style, painter, snarl);
+    }
+
+    /// Called to compute automatic layout positions for nodes.
+    ///
+    /// Override this method to implement automatic layout algorithms
+    /// (e.g., force-directed, hierarchical, tree layouts).
+    ///
+    /// Return a map of node IDs to their new positions. Only nodes present
+    /// in the returned map will be repositioned.
+    ///
+    /// This method is called when [`apply_layout`](Self::apply_layout) returns true.
+    ///
+    /// By default returns an empty map (no layout changes).
+    #[inline]
+    fn compute_layout(&mut self, snarl: &Snarl<T>) -> std::collections::HashMap<NodeId, Pos2> {
+        let _ = snarl;
+        std::collections::HashMap::new()
+    }
+
+    /// Returns whether to apply automatic layout this frame.
+    ///
+    /// Override this method to trigger layout computation based on user input
+    /// (e.g., a button press) or other conditions.
+    ///
+    /// By default returns false (no automatic layout).
+    #[inline]
+    fn apply_layout(&mut self, snarl: &Snarl<T>) -> bool {
+        let _ = snarl;
+        false
     }
 
     /// Informs the viewer what is the current transform of the snarl view

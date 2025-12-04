@@ -34,7 +34,7 @@ use self::{
 
 pub use self::{
     background_pattern::{BackgroundPattern, Grid},
-    config::{ModifierClick, SnarlConfig},
+    config::{ModifierClick, SnapGrid, SnapGridType, SnarlConfig},
     pin::{AnyPins, PinInfo, PinShape, PinWireInfo, SnarlPin},
     state::get_selected_nodes,
     viewer::SnarlViewer,
@@ -586,6 +586,16 @@ pub struct SnarlStyle {
     #[cfg_attr(feature = "egui-probe", egui_probe(skip))]
     pub wire_widget_align: Option<Align2>,
 
+    /// Controls the scale factor for pin hover effect.
+    /// Set to 1.0 to disable the hover effect.
+    /// Defaults to 1.2 (20% larger on hover).
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip_serializing_if = "Option::is_none", default)
+    )]
+    #[cfg_attr(feature = "egui-probe", egui_probe(range = 1.0..=2.0))]
+    pub pin_hover_scale: Option<f32>,
+
     #[doc(hidden)]
     #[cfg_attr(feature = "egui-probe", egui_probe(skip))]
     #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
@@ -594,20 +604,20 @@ pub struct SnarlStyle {
 }
 
 impl SnarlStyle {
-    fn get_node_layout(&self) -> NodeLayout {
+    fn node_layout(&self) -> NodeLayout {
         self.node_layout.unwrap_or_default()
     }
 
-    fn get_pin_size(&self, style: &Style) -> f32 {
+    fn pin_size(&self, style: &Style) -> f32 {
         self.pin_size.unwrap_or(style.spacing.interact_size.y * 0.6)
     }
 
-    fn get_pin_fill(&self, style: &Style) -> Color32 {
+    pub(crate) fn pin_fill(&self, style: &Style) -> Color32 {
         self.pin_fill
             .unwrap_or(style.visuals.widgets.active.bg_fill)
     }
 
-    fn get_pin_stroke(&self, style: &Style) -> Stroke {
+    pub(crate) fn pin_stroke(&self, style: &Style) -> Stroke {
         self.pin_stroke.unwrap_or_else(|| {
             Stroke::new(
                 style.visuals.widgets.active.bg_stroke.width,
@@ -616,80 +626,80 @@ impl SnarlStyle {
         })
     }
 
-    fn get_pin_shape(&self) -> PinShape {
+    pub(crate) fn pin_shape(&self) -> PinShape {
         self.pin_shape.unwrap_or(PinShape::Circle)
     }
 
-    fn get_pin_placement(&self) -> PinPlacement {
+    fn pin_placement(&self) -> PinPlacement {
         self.pin_placement.unwrap_or_default()
     }
 
-    fn get_wire_width(&self, style: &Style) -> f32 {
+    fn wire_width(&self, style: &Style) -> f32 {
         self.wire_width
-            .unwrap_or_else(|| self.get_pin_size(style) * 0.1)
+            .unwrap_or_else(|| self.pin_size(style) * 0.1)
     }
 
-    fn get_wire_frame_size(&self, style: &Style) -> f32 {
+    fn wire_frame_size(&self, style: &Style) -> f32 {
         self.wire_frame_size
-            .unwrap_or_else(|| self.get_pin_size(style) * 3.0)
+            .unwrap_or_else(|| self.pin_size(style) * 3.0)
     }
 
-    fn get_downscale_wire_frame(&self) -> bool {
+    fn downscale_wire_frame(&self) -> bool {
         self.downscale_wire_frame.unwrap_or(true)
     }
 
-    fn get_upscale_wire_frame(&self) -> bool {
+    fn upscale_wire_frame(&self) -> bool {
         self.upscale_wire_frame.unwrap_or(false)
     }
 
-    fn get_wire_style(&self) -> WireStyle {
+    pub(crate) fn wire_style(&self) -> WireStyle {
         self.wire_style.unwrap_or(WireStyle::Bezier5)
     }
 
-    fn get_wire_layer(&self) -> WireLayer {
+    fn wire_layer(&self) -> WireLayer {
         self.wire_layer.unwrap_or(WireLayer::BehindNodes)
     }
 
-    fn get_header_drag_space(&self, style: &Style) -> Vec2 {
+    fn header_drag_space(&self, style: &Style) -> Vec2 {
         self.header_drag_space
             .unwrap_or_else(|| vec2(style.spacing.icon_width, style.spacing.icon_width))
     }
 
-    fn get_collapsible(&self) -> bool {
+    fn collapsible(&self) -> bool {
         self.collapsible.unwrap_or(true)
     }
 
-    fn get_bg_frame(&self, style: &Style) -> Frame {
+    fn bg_frame(&self, style: &Style) -> Frame {
         self.bg_frame.unwrap_or_else(|| Frame::canvas(style))
     }
 
-    fn get_bg_pattern_stroke(&self, style: &Style) -> Stroke {
+    pub(crate) fn bg_pattern_stroke(&self, style: &Style) -> Stroke {
         self.bg_pattern_stroke
             .unwrap_or(style.visuals.widgets.noninteractive.bg_stroke)
     }
 
-    fn get_min_scale(&self) -> f32 {
+    fn min_scale(&self) -> f32 {
         self.min_scale.unwrap_or(0.2)
     }
 
-    fn get_max_scale(&self) -> f32 {
+    fn max_scale(&self) -> f32 {
         self.max_scale.unwrap_or(2.0)
     }
 
-    fn get_node_frame(&self, style: &Style) -> Frame {
+    fn node_frame(&self, style: &Style) -> Frame {
         self.node_frame.unwrap_or_else(|| Frame::window(style))
     }
 
-    fn get_header_frame(&self, style: &Style) -> Frame {
+    fn header_frame(&self, style: &Style) -> Frame {
         self.header_frame
-            .unwrap_or_else(|| self.get_node_frame(style).shadow(Shadow::NONE))
+            .unwrap_or_else(|| self.node_frame(style).shadow(Shadow::NONE))
     }
 
-    fn get_centering(&self) -> bool {
+    fn centering(&self) -> bool {
         self.centering.unwrap_or(true)
     }
 
-    fn get_select_stroke(&self, style: &Style) -> Stroke {
+    fn select_stroke(&self, style: &Style) -> Stroke {
         self.select_stoke.unwrap_or_else(|| {
             Stroke::new(
                 style.visuals.selection.stroke.width,
@@ -698,30 +708,34 @@ impl SnarlStyle {
         })
     }
 
-    fn get_select_fill(&self, style: &Style) -> Color32 {
+    fn select_fill(&self, style: &Style) -> Color32 {
         self.select_fill
             .unwrap_or_else(|| style.visuals.selection.bg_fill.gamma_multiply(0.3))
     }
 
-    fn get_select_rect_contained(&self) -> bool {
+    fn select_rect_contained(&self) -> bool {
         self.select_rect_contained.unwrap_or(false)
     }
 
-    fn get_select_style(&self, style: &Style) -> SelectionStyle {
+    fn select_style(&self, style: &Style) -> SelectionStyle {
         self.select_style.unwrap_or_else(|| SelectionStyle {
             margin: style.spacing.window_margin,
             rounding: style.visuals.window_corner_radius,
-            fill: self.get_select_fill(style),
-            stroke: self.get_select_stroke(style),
+            fill: self.select_fill(style),
+            stroke: self.select_stroke(style),
         })
     }
 
-    fn get_crisp_magnified_text(&self) -> bool {
+    fn crisp_magnified_text(&self) -> bool {
         self.crisp_magnified_text.unwrap_or(false)
     }
 
-    fn get_wire_smoothness(&self) -> f32 {
+    fn wire_smoothness(&self) -> f32 {
         self.wire_smoothness.unwrap_or(1.0)
+    }
+
+    fn pin_hover_scale(&self) -> f32 {
+        self.pin_hover_scale.unwrap_or(1.2)
     }
 }
 
@@ -811,6 +825,7 @@ impl SnarlStyle {
             wire_smoothness: None,
             wire_widget_gap: None,
             wire_widget_align: None,
+            pin_hover_scale: None,
 
             _non_exhaustive: (),
         }
@@ -1010,7 +1025,7 @@ where
         )
     });
 
-    let bg_frame = style.get_bg_frame(ui.style());
+    let bg_frame = style.bg_frame(ui.style());
 
     let outer_size_bounds = ui.available_size_before_wrap().max(min_size).min(max_size);
 
@@ -1028,8 +1043,8 @@ where
 
     ui.ctx().set_sublayer(ui.layer_id(), snarl_layer_id);
 
-    let mut min_scale = style.get_min_scale();
-    let mut max_scale = style.get_max_scale();
+    let mut min_scale = style.min_scale();
+    let mut max_scale = style.max_scale();
 
     let ui_rect = content_rect;
 
@@ -1039,6 +1054,16 @@ where
     // Allow viewer to update selection before rendering
     if let Some(selection) = viewer.update_selection(snarl_state.selected_nodes()) {
         snarl_state.select_many_nodes(true, selection.iter().cloned());
+    }
+
+    // Apply automatic layout if requested
+    if viewer.apply_layout(snarl) {
+        let layout = viewer.compute_layout(snarl);
+        for (node_id, new_pos) in layout {
+            if let Some(node) = snarl.nodes.get_mut(node_id.0) {
+                node.pos = new_pos;
+            }
+        }
     }
 
     let mut to_global = snarl_state.to_global();
@@ -1053,7 +1078,7 @@ where
             .sense(Sense::click_and_drag()),
     );
 
-    if style.get_crisp_magnified_text() {
+    if style.crisp_magnified_text() {
         style.scale(max_scale);
         ui.style_mut().scale(max_scale);
 
@@ -1102,6 +1127,11 @@ where
         snarl,
     );
 
+    // Draw snap grid if visible
+    if let Some(ref grid) = config.grid_snap {
+        grid.draw(&viewport, ui.painter());
+    }
+
     let mut node_moved = None;
     let mut node_to_top = None;
 
@@ -1128,11 +1158,11 @@ where
         }
     }
 
-    let wire_frame_size = style.get_wire_frame_size(ui.style());
-    let wire_width = style.get_wire_width(ui.style());
-    let wire_threshold = style.get_wire_smoothness();
+    let wire_frame_size = style.wire_frame_size(ui.style());
+    let wire_width = style.wire_width(ui.style());
+    let wire_threshold = style.wire_smoothness();
 
-    let wire_shape_idx = match style.get_wire_layer() {
+    let wire_shape_idx = match style.wire_layer() {
         WireLayer::BehindNodes => Some(ui.painter().add(Shape::Noop)),
         WireLayer::AboveNodes => None,
     };
@@ -1229,8 +1259,8 @@ where
                         in_pin: wire.in_pin,
                     },
                     wire_frame_size,
-                    style.get_upscale_wire_frame(),
-                    style.get_downscale_wire_frame(),
+                    style.upscale_wire_frame(),
+                    style.downscale_wire_frame(),
                     from_r.pos,
                     to_r.pos,
                     latest_pos,
@@ -1267,8 +1297,8 @@ where
             },
             &mut wire_shapes,
             wire_frame_size,
-            style.get_upscale_wire_frame(),
-            style.get_downscale_wire_frame(),
+            style.upscale_wire_frame(),
+            style.downscale_wire_frame(),
             from_r.pos,
             to_r.pos,
             Stroke::new(draw_width, color),
@@ -1296,26 +1326,33 @@ where
     }
 
     if let Some(select_rect) = rect_selection_ended {
-        let select_nodes = node_rects.into_iter().filter_map(|(id, rect)| {
-            let select = if style.get_select_rect_contained() {
-                select_rect.contains_rect(rect)
-            } else {
-                select_rect.intersects(rect)
-            };
+        let mut select_nodes: Vec<NodeId> = node_rects
+            .into_iter()
+            .filter_map(|(id, rect)| {
+                let select = if style.select_rect_contained() {
+                    select_rect.contains_rect(rect)
+                } else {
+                    select_rect.intersects(rect)
+                };
 
-            if select { Some(id) } else { None }
-        });
+                if select { Some(id) } else { None }
+            })
+            .collect();
+
+        // In single_select mode, only select one node (the last one found)
+        if config.single_select && select_nodes.len() > 1 {
+            select_nodes = select_nodes.into_iter().last().into_iter().collect();
+        }
 
         if input
             .modifiers
             .contains(config.deselect_all_nodes.modifiers)
         {
-            snarl_state.deselect_many_nodes(select_nodes);
+            snarl_state.deselect_many_nodes(select_nodes.into_iter());
         } else {
-            snarl_state.select_many_nodes(
-                !input.modifiers.contains(config.rect_select.modifiers),
-                select_nodes,
-            );
+            // In single_select mode, always reset (clear previous selection)
+            let reset = config.single_select || !input.modifiers.contains(config.rect_select.modifiers);
+            snarl_state.select_many_nodes(reset, select_nodes.into_iter());
         }
     }
 
@@ -1323,8 +1360,8 @@ where
         ui.painter().rect(
             select_rect,
             0.0,
-            style.get_select_fill(ui.style()),
-            style.get_select_stroke(ui.style()),
+            style.select_fill(ui.style()),
+            style.select_stroke(ui.style()),
             StrokeKind::Inside,
         );
     }
@@ -1343,7 +1380,7 @@ where
     }
 
     // Do centering unless no nodes are present.
-    if style.get_centering() && snarl_resp.double_clicked() && nodes_bb.is_finite() {
+    if style.centering() && snarl_resp.double_clicked() && nodes_bb.is_finite() {
         let nodes_bb = nodes_bb.expand(100.0);
         snarl_state.look_at(nodes_bb, ui_rect, min_scale, max_scale);
     }
@@ -1464,8 +1501,8 @@ where
                     WireId::NewInput { snarl_id, in_pin },
                     &mut wire_shapes,
                     wire_frame_size,
-                    style.get_upscale_wire_frame(),
-                    style.get_downscale_wire_frame(),
+                    style.upscale_wire_frame(),
+                    style.downscale_wire_frame(),
                     from_pos,
                     to_r.pos,
                     Stroke::new(wire_width, to_r.wire_color),
@@ -1484,8 +1521,8 @@ where
                     WireId::NewOutput { snarl_id, out_pin },
                     &mut wire_shapes,
                     wire_frame_size,
-                    style.get_upscale_wire_frame(),
-                    style.get_downscale_wire_frame(),
+                    style.upscale_wire_frame(),
+                    style.downscale_wire_frame(),
                     from_r.pos,
                     to_pos,
                     Stroke::new(wire_width, from_r.wire_color),
@@ -1574,17 +1611,36 @@ where
     if let Some((node, delta)) = node_moved {
         if snarl.nodes.contains(node.0) {
             ui.ctx().request_repaint();
+
+            // Helper to snap position to grid if enabled
+            let snap_to_grid = |pos: Pos2| -> Pos2 {
+                if let Some(ref grid) = config.grid_snap {
+                    grid.snap(pos)
+                } else {
+                    pos
+                }
+            };
+
             if snarl_state.selected_nodes().contains(&node) {
-                for node in snarl_state.selected_nodes() {
-                    let node = &mut snarl.nodes[node.0];
-                    node.pos += delta;
+                for node_id in snarl_state.selected_nodes() {
+                    let node_data = &mut snarl.nodes[node_id.0];
+                    node_data.pos += delta;
+                    node_data.pos = snap_to_grid(node_data.pos);
+                    let new_pos = node_data.pos;
+                    viewer.node_moved(*node_id, new_pos, snarl);
                 }
             } else {
-                let node = &mut snarl.nodes[node.0];
-                node.pos += delta;
+                let node_data = &mut snarl.nodes[node.0];
+                node_data.pos += delta;
+                node_data.pos = snap_to_grid(node_data.pos);
+                let new_pos = node_data.pos;
+                viewer.node_moved(node, new_pos, snarl);
             }
         }
     }
+
+    // Draw foreground elements (comments, annotations, overlays)
+    viewer.draw_foreground(&viewport, &style, ui.style(), ui.painter(), snarl);
 
     snarl_state.store(snarl, ui.ctx());
 
@@ -1653,15 +1709,18 @@ where
                 ));
             }
 
-            let y0 = pin_ui.max_rect().min.y;
-            let y1 = pin_ui.max_rect().max.y;
-
             // Show input content
             let snarl_pin = viewer.show_input(in_pin, pin_ui, snarl);
             if !snarl.nodes.contains(node.0) {
                 // If removed
                 return;
             }
+
+            // Use min_rect after content is shown to get actual content bounds.
+            // This ensures pin is aligned with actual content, not pre-allocated space.
+            let content_rect = pin_ui.min_rect();
+            let y0 = content_rect.min.y;
+            let y1 = content_rect.max.y;
 
             let pin_rect = snarl_pin.pin_rect(
                 input_x,
@@ -1722,7 +1781,7 @@ where
                     }
                 }
                 pin_hovered = Some(AnyPin::In(in_pin.id));
-                visual_pin_rect = visual_pin_rect.scale_from_center(1.2);
+                visual_pin_rect = visual_pin_rect.scale_from_center(style.pin_hover_scale());
             }
 
             let wire_info =
@@ -1817,15 +1876,18 @@ where
                 ));
             }
 
-            let y0 = pin_ui.max_rect().min.y;
-            let y1 = pin_ui.max_rect().max.y;
-
             // Show output content
             let snarl_pin = viewer.show_output(out_pin, pin_ui, snarl);
             if !snarl.nodes.contains(node.0) {
                 // If removed
                 return;
             }
+
+            // Use min_rect after content is shown to get actual content bounds.
+            // This ensures pin is aligned with actual content, not pre-allocated space.
+            let content_rect = pin_ui.min_rect();
+            let y0 = content_rect.min.y;
+            let y1 = content_rect.max.y;
 
             let pin_rect = snarl_pin.pin_rect(
                 output_x,
@@ -1884,7 +1946,7 @@ where
                     }
                 }
                 pin_hovered = Some(AnyPin::Out(out_pin.id));
-                visual_pin_rect = visual_pin_rect.scale_from_center(1.2);
+                visual_pin_rect = visual_pin_rect.scale_from_center(style.pin_hover_scale());
             }
 
             let wire_info =
@@ -2004,7 +2066,7 @@ where
     let mut pin_hovered = None;
 
     let node_frame = viewer.node_frame(
-        style.get_node_frame(ui.style()),
+        style.node_frame(ui.style()),
         node,
         &inputs,
         &outputs,
@@ -2012,7 +2074,7 @@ where
     );
 
     let header_frame = viewer.header_frame(
-        style.get_header_frame(ui.style()),
+        style.header_frame(ui.style()),
         node,
         &inputs,
         &outputs,
@@ -2023,7 +2085,7 @@ where
     let node_frame_rect = node_rect + node_frame.total_margin();
 
     if snarl_state.selected_nodes().contains(&node) {
-        let select_style = style.get_select_style(ui.style());
+        let select_style = style.select_style(ui.style());
 
         let select_rect = node_frame_rect + select_style.margin;
 
@@ -2038,11 +2100,11 @@ where
 
     // Size of the pin.
     // Side of the square or diameter of the circle.
-    let pin_size = style.get_pin_size(ui.style()).max(0.0);
+    let pin_size = style.pin_size(ui.style()).max(0.0);
 
-    let pin_placement = style.get_pin_placement();
+    let pin_placement = style.pin_placement();
 
-    let header_drag_space = style.get_header_drag_space(ui.style()).max(Vec2::ZERO);
+    let header_drag_space = style.header_drag_space(ui.style()).max(Vec2::ZERO);
 
     // Interact with node frame.
     let r = ui.interact(
@@ -2060,7 +2122,9 @@ where
 
     if r.clicked_by(config.click_node.mouse_button) || r.dragged_by(config.drag_node.mouse_button) {
         if modifiers.contains(config.select_node.modifiers) {
-            snarl_state.select_one_node(modifiers.command, node);
+            // In single_select mode, always clear previous selection
+            let reset = config.single_select || modifiers.command;
+            snarl_state.select_one_node(reset, node);
         } else if modifiers.contains(config.deselect_node.modifiers) {
             snarl_state.deselect_one_node(node);
         }
@@ -2174,7 +2238,7 @@ where
         );
 
         let node_layout =
-            viewer.node_layout(style.get_node_layout(), node, &inputs, &outputs, snarl);
+            viewer.node_layout(style.node_layout(), node, &inputs, &outputs, snarl);
 
         let payload_clip_rect =
             Rect::from_min_max(node_rect.min, pos2(node_rect.max.x, f32::INFINITY));
@@ -2606,7 +2670,7 @@ where
 
         header_frame.show(header_ui, |ui: &mut Ui| {
             ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
-                if style.get_collapsible() {
+                if style.collapsible() {
                     let (_, r) = ui.allocate_exact_size(
                         vec2(ui.spacing().icon_width, ui.spacing().icon_width),
                         Sense::click(),
@@ -2640,6 +2704,7 @@ where
         ui.expand_to_include_rect(header_rect);
         let header_size = header_rect.size();
         node_state.set_header_height(header_size.y);
+        node_state.set_header_width(header_size.x);
 
         node_state.set_size(vec2(
             f32::max(header_size.x, new_pins_size.x),

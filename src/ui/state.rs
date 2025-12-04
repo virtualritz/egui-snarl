@@ -19,6 +19,7 @@ pub struct NodeState {
     /// It is updated to fit content.
     size: Vec2,
     header_height: f32,
+    header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
 
@@ -30,6 +31,7 @@ pub struct NodeState {
 struct NodeData {
     size: Vec2,
     header_height: f32,
+    header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
 }
@@ -44,6 +46,7 @@ impl NodeState {
             |data| NodeState {
                 size: data.size,
                 header_height: data.header_height,
+                header_width: data.header_width,
                 input_heights: data.input_heights,
                 output_heights: data.output_heights,
                 id,
@@ -64,6 +67,7 @@ impl NodeState {
                     NodeData {
                         size: self.size,
                         header_height: self.header_height,
+                        header_width: self.header_width,
                         input_heights: self.input_heights,
                         output_heights: self.output_heights,
                     },
@@ -75,10 +79,12 @@ impl NodeState {
 
     /// Finds node rect at specific position (excluding node frame margin).
     pub fn node_rect(&self, pos: Pos2, openness: f32) -> Rect {
+        // Interpolate width between header_width (collapsed) and full size.x (open)
+        let width = self.header_width + (self.size.x - self.header_width) * openness;
         Rect::from_min_size(
             pos,
             egui::vec2(
-                self.size.x,
+                width,
                 f32::max(self.header_height, self.size.y * openness),
             ),
         )
@@ -104,6 +110,14 @@ impl NodeState {
         #[allow(clippy::float_cmp)]
         if self.header_height != height {
             self.header_height = height;
+            self.dirty = true;
+        }
+    }
+
+    pub fn set_header_width(&mut self, width: f32) {
+        #[allow(clippy::float_cmp)]
+        if self.header_width != width {
+            self.header_width = width;
             self.dirty = true;
         }
     }
@@ -136,6 +150,7 @@ impl NodeState {
         NodeState {
             size: spacing.interact_size,
             header_height: spacing.interact_size.y,
+            header_width: spacing.interact_size.x,
             input_heights: SmallVec::new_const(),
             output_heights: SmallVec::new_const(),
             id,
@@ -178,6 +193,9 @@ pub struct SnarlState {
 
     /// List of currently selected nodes.
     selected_nodes: SmallVec<[NodeId; 8]>,
+
+    /// The center of the UI rect, used to track container movement.
+    ui_rect_center: Pos2,
 }
 
 #[derive(Clone, Default)]
@@ -225,6 +243,9 @@ struct SnarlStateData {
     new_wires: Option<NewWires>,
     new_wires_menu: bool,
     rect_selection: Option<RectSelect>,
+    /// The center of the UI rect when the transform was last stored.
+    /// Used to adjust the transform when the UI rect moves (e.g., window dragged).
+    ui_rect_center: Pos2,
 }
 
 impl SnarlStateData {
@@ -260,12 +281,22 @@ impl SnarlState {
         };
 
         let mut selected_nodes = SelectedNodes::load(cx, id).0;
-        let dirty = prune_selected_nodes(&mut selected_nodes, snarl);
+        let mut dirty = prune_selected_nodes(&mut selected_nodes, snarl);
 
         let draw_order = DrawOrder::load(cx, id).0;
 
+        // Adjust transform if the UI rect center has moved (e.g., window was dragged).
+        // This ensures nodes follow the container when it moves.
+        let ui_rect_center = ui_rect.center();
+        let mut to_global = data.to_global;
+        let center_delta = ui_rect_center - data.ui_rect_center;
+        if center_delta != Vec2::ZERO {
+            to_global.translation += center_delta;
+            dirty = true;
+        }
+
         SnarlState {
-            to_global: data.to_global,
+            to_global,
             new_wires: data.new_wires,
             new_wires_menu: data.new_wires_menu,
             id,
@@ -273,6 +304,7 @@ impl SnarlState {
             rect_selection: data.rect_selection,
             draw_order,
             selected_nodes,
+            ui_rect_center,
         }
     }
 
@@ -291,10 +323,11 @@ impl SnarlState {
             bb = Rect::from_min_max(Pos2::new(-100.0, -100.0), Pos2::new(100.0, 100.0));
         }
 
+        let ui_rect_center = ui_rect.center();
         let scaling2 = ui_rect.size() / bb.size();
         let scaling = scaling2.min_elem().clamp(min_scale, max_scale);
 
-        let to_global = transform_matching_points(bb.center(), ui_rect.center(), scaling);
+        let to_global = transform_matching_points(bb.center(), ui_rect_center, scaling);
 
         SnarlState {
             to_global,
@@ -304,6 +337,7 @@ impl SnarlState {
             dirty: true,
             draw_order: Vec::new(),
             rect_selection: None,
+            ui_rect_center,
             selected_nodes: SmallVec::new(),
         }
     }
@@ -318,6 +352,7 @@ impl SnarlState {
                 new_wires: self.new_wires,
                 new_wires_menu: self.new_wires_menu,
                 rect_selection: self.rect_selection,
+                ui_rect_center: self.ui_rect_center,
             };
             data.save(cx, self.id);
 
