@@ -36,7 +36,7 @@ pub use self::{
     background_pattern::{BackgroundPattern, Grid},
     config::{ModifierClick, SnapGrid, SnapGridType, SnarlConfig},
     pin::{AnyPins, PinInfo, PinShape, PinWireInfo, SnarlPin},
-    state::get_selected_nodes,
+    state::selected_nodes,
     viewer::SnarlViewer,
     wire::{WireLayer, WireStyle},
 };
@@ -2126,7 +2126,11 @@ where
             let reset = config.single_select || modifiers.command;
             snarl_state.select_one_node(reset, node);
         } else if modifiers.contains(config.deselect_node.modifiers) {
+            // Cmd+click: deselect
             snarl_state.deselect_one_node(node);
+        } else {
+            // Plain click: select exclusively (deselect all others first)
+            snarl_state.select_one_node(true, node);
         }
     }
 

@@ -179,19 +179,19 @@ impl PinInfo {
 
     /// Returns the shape of the pin.
     #[must_use]
-    pub fn get_shape(&self, snarl_style: &SnarlStyle) -> PinShape {
+    pub fn shape(&self, snarl_style: &SnarlStyle) -> PinShape {
         self.shape.unwrap_or_else(|| snarl_style.pin_shape())
     }
 
     /// Returns fill color of the pin.
     #[must_use]
-    pub fn get_fill(&self, snarl_style: &SnarlStyle, style: &Style) -> Color32 {
+    pub fn fill(&self, snarl_style: &SnarlStyle, style: &Style) -> Color32 {
         self.fill.unwrap_or_else(|| snarl_style.pin_fill(style))
     }
 
     /// Returns outline stroke of the pin.
     #[must_use]
-    pub fn get_stroke(&self, snarl_style: &SnarlStyle, style: &Style) -> Stroke {
+    pub fn stroke(&self, snarl_style: &SnarlStyle, style: &Style) -> Stroke {
         self.stroke
             .unwrap_or_else(|| snarl_style.pin_stroke(style))
     }
@@ -207,9 +207,9 @@ impl PinInfo {
         rect: Rect,
         painter: &Painter,
     ) -> PinWireInfo {
-        let shape = self.get_shape(snarl_style);
-        let fill = self.get_fill(snarl_style, style);
-        let stroke = self.get_stroke(snarl_style, style);
+        let shape = self.shape(snarl_style);
+        let fill = self.fill(snarl_style, style);
+        let stroke = self.stroke(snarl_style, style);
         draw_pin(painter, shape, fill, stroke, rect);
 
         PinWireInfo {

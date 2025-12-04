@@ -685,7 +685,7 @@ impl CacheTrait for WiresCache {
 }
 
 impl WiresCache {
-    pub fn get_3(&mut self, wire: WireId, args: WireArgs) -> &mut WireCache3 {
+    pub fn bezier_3(&mut self, wire: WireId, args: WireArgs) -> &mut WireCache3 {
         let cached = self.bezier_3.entry(wire).or_default();
 
         cached.generation = self.generation;
@@ -705,7 +705,7 @@ impl WiresCache {
         cached
     }
 
-    pub fn get_5(&mut self, wire: WireId, args: WireArgs) -> &mut WireCache5 {
+    pub fn bezier_5(&mut self, wire: WireId, args: WireArgs) -> &mut WireCache5 {
         let cached = self.bezier_5.entry(wire).or_default();
 
         cached.generation = self.generation;
@@ -726,7 +726,7 @@ impl WiresCache {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn get_aa(&mut self, wire: WireId, args: WireArgs) -> &mut WireCacheAA {
+    pub fn axis_aligned(&mut self, wire: WireId, args: WireArgs) -> &mut WireCacheAA {
         let cached = self.axis_aligned.entry(wire).or_default();
 
         cached.generation = self.generation;
@@ -759,7 +759,7 @@ fn draw_bezier_3(
     let clip_rect = ui.clip_rect();
 
     ui.memory_mut(|m| {
-        let cached = m.caches.cache::<WiresCache>().get_3(wire, args);
+        let cached = m.caches.cache::<WiresCache>().bezier_3(wire, args);
 
         if cached.aabb.intersects(clip_rect) {
             shapes.push(Shape::line(cached.line(threshold), stroke));
@@ -800,7 +800,7 @@ fn draw_bezier_5(
     let clip_rect = ui.clip_rect();
 
     ui.memory_mut(|m| {
-        let cached = m.caches.cache::<WiresCache>().get_5(wire, args);
+        let cached = m.caches.cache::<WiresCache>().bezier_5(wire, args);
 
         if cached.aabb.intersects(clip_rect) {
             shapes.push(Shape::line(cached.line(threshold), stroke));
@@ -918,7 +918,7 @@ fn hit_wire_bezier_3(
     hit_threshold: f32,
 ) -> bool {
     let (aabb, points) = ctx.memory_mut(|m| {
-        let cache = m.caches.cache::<WiresCache>().get_3(wire, args);
+        let cache = m.caches.cache::<WiresCache>().bezier_3(wire, args);
 
         (cache.aabb, cache.points)
     });
@@ -1005,7 +1005,7 @@ fn hit_wire_bezier_5(
     hit_threshold: f32,
 ) -> bool {
     let (aabb, points) = ctx.memory_mut(|m| {
-        let cache = m.caches.cache::<WiresCache>().get_5(wire, args);
+        let cache = m.caches.cache::<WiresCache>().bezier_5(wire, args);
 
         (cache.aabb, cache.points)
     });
@@ -1214,7 +1214,7 @@ fn hit_wire_axis_aligned(
     hit_threshold: f32,
 ) -> bool {
     let aawire = ctx.memory_mut(|m| {
-        let cache = m.caches.cache::<WiresCache>().get_aa(wire, args);
+        let cache = m.caches.cache::<WiresCache>().axis_aligned(wire, args);
 
         cache.aawire
     });
@@ -1292,7 +1292,7 @@ fn draw_axis_aligned(
 
     let clip_rect = ui.clip_rect();
     ui.memory_mut(|m| {
-        let cached = m.caches.cache::<WiresCache>().get_aa(wire, args);
+        let cached = m.caches.cache::<WiresCache>().axis_aligned(wire, args);
 
         if cached.aawire.aabb.intersects(clip_rect) {
             shapes.push(Shape::line(cached.line(threshold), stroke));

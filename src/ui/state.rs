@@ -630,8 +630,8 @@ impl SnarlWidget {
     /// Use same `Ui` instance that was used in [`SnarlWidget::show`].
     #[must_use]
     #[inline]
-    pub fn get_selected_nodes(self, ui: &Ui) -> Vec<NodeId> {
-        self.get_selected_nodes_at(ui.id(), ui.ctx())
+    pub fn selected_nodes(self, ui: &Ui) -> Vec<NodeId> {
+        self.selected_nodes_at(ui.id(), ui.ctx())
     }
 
     /// Returns list of nodes selected in the UI for the `SnarlWidget` with same id.
@@ -639,7 +639,7 @@ impl SnarlWidget {
     /// `ui_id` must be the Id of the `Ui` instance that was used in [`SnarlWidget::show`].
     #[must_use]
     #[inline]
-    pub fn get_selected_nodes_at(self, ui_id: Id, ctx: &Context) -> Vec<NodeId> {
+    pub fn selected_nodes_at(self, ui_id: Id, ctx: &Context) -> Vec<NodeId> {
         let snarl_id = self.get_id(ui_id);
 
         ctx.data(|d| d.get_temp::<SelectedNodes>(snarl_id).unwrap_or_default().0)
@@ -650,10 +650,10 @@ impl SnarlWidget {
 /// Returns nodes selected in the UI for the `SnarlWidget` with same ID.
 ///
 /// Only works if [`SnarlWidget::id`] was used.
-/// For other cases construct [`SnarlWidget`] and use [`SnarlWidget::get_selected_nodes`] or [`SnarlWidget::get_selected_nodes_at`].
+/// For other cases construct [`SnarlWidget`] and use [`SnarlWidget::selected_nodes`] or [`SnarlWidget::selected_nodes_at`].
 #[must_use]
 #[inline]
-pub fn get_selected_nodes(id: Id, ctx: &Context) -> Vec<NodeId> {
+pub fn selected_nodes(id: Id, ctx: &Context) -> Vec<NodeId> {
     ctx.data(|d| d.get_temp::<SelectedNodes>(id).unwrap_or_default().0)
         .into_vec()
 }
