@@ -4,7 +4,7 @@ use crate::{InPin, InPinId, NodeId, OutPin, OutPinId, Snarl};
 
 use super::{
     BackgroundPattern, NodeLayout, SnarlStyle,
-    pin::{AnyPins, SnarlPin},
+    pin::{AnyPins, PinContext, SnarlPin},
 };
 
 /// `SnarlViewer` is a trait for viewing a Snarl.
@@ -148,10 +148,15 @@ pub trait SnarlViewer<T> {
     fn inputs(&mut self, node: &T) -> usize;
 
     /// Renders one specified node's input element and returns drawer for the corresponding pin.
+    ///
+    /// The `context` parameter provides information about the current UI state,
+    /// including whether the label should be visible based on [`SnarlStyle::pin_label_visibility`].
+    /// Use `context.label_visible` to conditionally show or hide the pin's label.
     fn show_input(
         &mut self,
         pin: &InPin,
         ui: &mut Ui,
+        context: PinContext,
         snarl: &mut Snarl<T>,
     ) -> impl SnarlPin + 'static;
 
@@ -161,10 +166,15 @@ pub trait SnarlViewer<T> {
     fn outputs(&mut self, node: &T) -> usize;
 
     /// Renders the node's output.
+    ///
+    /// The `context` parameter provides information about the current UI state,
+    /// including whether the label should be visible based on [`SnarlStyle::pin_label_visibility`].
+    /// Use `context.label_visible` to conditionally show or hide the pin's label.
     fn show_output(
         &mut self,
         pin: &OutPin,
         ui: &mut Ui,
+        context: PinContext,
         snarl: &mut Snarl<T>,
     ) -> impl SnarlPin + 'static;
 

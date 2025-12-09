@@ -12,6 +12,9 @@ use super::{SnarlWidget, transform_matching_points};
 
 pub type RowHeights = SmallVec<[f32; 8]>;
 
+/// Type alias for column widths (used in vertical layouts).
+pub type ColumnWidths = SmallVec<[f32; 8]>;
+
 /// Node UI state.
 #[derive(Debug)]
 pub struct NodeState {
@@ -22,6 +25,10 @@ pub struct NodeState {
     header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
+    /// Column widths for input pins in vertical layouts.
+    input_widths: ColumnWidths,
+    /// Column widths for output pins in vertical layouts.
+    output_widths: ColumnWidths,
 
     id: Id,
     dirty: bool,
@@ -34,6 +41,8 @@ struct NodeData {
     header_width: f32,
     input_heights: RowHeights,
     output_heights: RowHeights,
+    input_widths: ColumnWidths,
+    output_widths: ColumnWidths,
 }
 
 impl NodeState {
@@ -49,6 +58,8 @@ impl NodeState {
                 header_width: data.header_width,
                 input_heights: data.input_heights,
                 output_heights: data.output_heights,
+                input_widths: data.input_widths,
+                output_widths: data.output_widths,
                 id,
                 dirty: false,
             },
@@ -70,6 +81,8 @@ impl NodeState {
                         header_width: self.header_width,
                         input_heights: self.input_heights,
                         output_heights: self.output_heights,
+                        input_widths: self.input_widths,
+                        output_widths: self.output_widths,
                     },
                 );
             });
@@ -83,10 +96,7 @@ impl NodeState {
         let width = self.header_width + (self.size.x - self.header_width) * openness;
         Rect::from_min_size(
             pos,
-            egui::vec2(
-                width,
-                f32::max(self.header_height, self.size.y * openness),
-            ),
+            egui::vec2(width, f32::max(self.header_height, self.size.y * openness)),
         )
         .round_ui()
     }
@@ -153,8 +163,34 @@ impl NodeState {
             header_width: spacing.interact_size.x,
             input_heights: SmallVec::new_const(),
             output_heights: SmallVec::new_const(),
+            input_widths: SmallVec::new_const(),
+            output_widths: SmallVec::new_const(),
             id,
             dirty: true,
+        }
+    }
+
+    pub fn input_widths(&self) -> &ColumnWidths {
+        &self.input_widths
+    }
+
+    pub fn output_widths(&self) -> &ColumnWidths {
+        &self.output_widths
+    }
+
+    pub fn set_input_widths(&mut self, input_widths: ColumnWidths) {
+        #[allow(clippy::float_cmp)]
+        if self.input_widths != input_widths {
+            self.input_widths = input_widths;
+            self.dirty = true;
+        }
+    }
+
+    pub fn set_output_widths(&mut self, output_widths: ColumnWidths) {
+        #[allow(clippy::float_cmp)]
+        if self.output_widths != output_widths {
+            self.output_widths = output_widths;
+            self.dirty = true;
         }
     }
 }

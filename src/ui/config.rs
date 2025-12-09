@@ -14,8 +14,10 @@ pub struct ModifierClick {
 /// Type of snap grid for node positioning.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum SnapGridType {
     /// Square/rectangular grid.
+    #[default]
     Quad,
     /// Hexagonal grid with pointy tops (vertical orientation).
     /// Rows are offset horizontally.
@@ -23,12 +25,6 @@ pub enum SnapGridType {
     /// Hexagonal grid with flat tops (horizontal orientation).
     /// Columns are offset vertically.
     HexFlat,
-}
-
-impl Default for SnapGridType {
-    fn default() -> Self {
-        Self::Quad
-    }
 }
 
 /// Configuration for snap grid.
@@ -179,14 +175,17 @@ impl SnapGrid {
     /// Get the effective stroke for drawing the grid.
     #[must_use]
     pub fn stroke(&self) -> Stroke {
-        let color = self.color.unwrap_or(Color32::from_rgba_unmultiplied(128, 128, 128, 80));
+        let color = self
+            .color
+            .unwrap_or(Color32::from_rgba_unmultiplied(128, 128, 128, 80));
         Stroke::new(1.0, color)
     }
 
     /// Get the effective color for drawing points.
     #[must_use]
     pub fn point_color(&self) -> Color32 {
-        self.color.unwrap_or(Color32::from_rgba_unmultiplied(128, 128, 128, 120))
+        self.color
+            .unwrap_or(Color32::from_rgba_unmultiplied(128, 128, 128, 120))
     }
 
     /// Draw the snap grid within the given viewport.
@@ -231,7 +230,11 @@ impl SnapGrid {
 
         for row in min_row..=max_row {
             let y = row as f32 * vert_spacing;
-            let x_offset = if row.abs() % 2 == 1 { horiz_spacing / 2.0 } else { 0.0 };
+            let x_offset = if row.abs() % 2 == 1 {
+                horiz_spacing / 2.0
+            } else {
+                0.0
+            };
 
             for col in min_col..=max_col {
                 let x = col as f32 * horiz_spacing + x_offset;
@@ -254,7 +257,11 @@ impl SnapGrid {
 
         for col in min_col..=max_col {
             let x = col as f32 * horiz_spacing;
-            let y_offset = if col.abs() % 2 == 1 { vert_spacing / 2.0 } else { 0.0 };
+            let y_offset = if col.abs() % 2 == 1 {
+                vert_spacing / 2.0
+            } else {
+                0.0
+            };
 
             for row in min_row..=max_row {
                 let y = row as f32 * vert_spacing + y_offset;

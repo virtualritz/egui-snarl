@@ -4,6 +4,49 @@ use crate::{InPinId, OutPinId};
 
 use super::{SnarlStyle, WireStyle};
 
+/// Context information for pin rendering, provided by the graph UI.
+///
+/// This struct is passed to `show_input` and `show_output` methods to inform
+/// the viewer about the current UI state and whether labels should be visible.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PinContext {
+    /// Whether the label should be visible based on current UI state and style settings.
+    pub label_visible: bool,
+
+    /// Whether a wire is currently being dragged (connecting mode).
+    pub is_connecting: bool,
+
+    /// Whether this specific pin is currently hovered.
+    pub is_hovered: bool,
+
+    /// Whether the dragging wire cursor is near this pin's node.
+    pub wire_near_node: bool,
+}
+
+impl PinContext {
+    /// Creates a new `PinContext` with all fields set to their default values.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            label_visible: true,
+            is_connecting: false,
+            is_hovered: false,
+            wire_near_node: false,
+        }
+    }
+
+    /// Creates a `PinContext` with label always visible (default behavior).
+    #[must_use]
+    pub const fn always_visible() -> Self {
+        Self {
+            label_visible: true,
+            is_connecting: false,
+            is_hovered: false,
+            wire_near_node: false,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum AnyPin {
     Out(OutPinId),
@@ -35,10 +78,20 @@ pub struct PinWireInfo {
 
 /// Uses `Painter` to draw a pin.
 pub trait SnarlPin {
-    /// Calculates pin Rect from the given parameters.
+    /// Calculates pin Rect from the given parameters for vertical pin layouts (pins on left/right).
+    /// The pin is centered vertically between y0 and y1.
     fn pin_rect(&self, x: f32, y0: f32, y1: f32, size: f32) -> Rect {
         // Center vertically by default.
         let y = (y0 + y1) * 0.5;
+        let pin_pos = pos2(x, y);
+        Rect::from_center_size(pin_pos, vec2(size, size))
+    }
+
+    /// Calculates pin Rect from the given parameters for horizontal pin layouts (pins on top/bottom).
+    /// The pin is centered horizontally between x0 and x1.
+    fn pin_rect_horizontal(&self, y: f32, x0: f32, x1: f32, size: f32) -> Rect {
+        // Center horizontally by default.
+        let x = (x0 + x1) * 0.5;
         let pin_pos = pos2(x, y);
         Rect::from_center_size(pin_pos, vec2(size, size))
     }
@@ -64,6 +117,7 @@ pub trait SnarlPin {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "egui-probe", derive(egui_probe::EguiProbe))]
+#[cfg_attr(feature = "facet", derive(facet::Facet), repr(u8))]
 pub enum PinShape {
     /// Circle shape.
     #[default]
@@ -192,8 +246,7 @@ impl PinInfo {
     /// Returns outline stroke of the pin.
     #[must_use]
     pub fn stroke(&self, snarl_style: &SnarlStyle, style: &Style) -> Stroke {
-        self.stroke
-            .unwrap_or_else(|| snarl_style.pin_stroke(style))
+        self.stroke.unwrap_or_else(|| snarl_style.pin_stroke(style))
     }
 
     /// Draws the pin and returns color.

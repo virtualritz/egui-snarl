@@ -40,6 +40,7 @@ impl<T> Default for Snarl<T> {
     derive(serde::Serialize, serde::Deserialize),
     serde(transparent)
 )]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
 pub struct NodeId(pub usize);
 
 /// Node of the graph.
@@ -62,6 +63,7 @@ pub struct Node<T> {
 /// Cosists of node id and pin index.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
 pub struct OutPinId {
     /// Node id.
     pub node: NodeId,
@@ -73,6 +75,7 @@ pub struct OutPinId {
 /// Input pin identifier. Cosists of node id and pin index.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
 pub struct InPinId {
     /// Node id.
     pub node: NodeId,
@@ -408,20 +411,29 @@ impl<T> Snarl<T> {
     }
 
     /// Deprecated: Use [`node_mut`](Self::node_mut) instead.
-    #[deprecated(since = "0.8.0", note = "renamed to `node_mut` per Rust API guidelines")]
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `node_mut` per Rust API guidelines"
+    )]
     pub fn get_node_mut(&mut self, idx: NodeId) -> Option<&mut T> {
         self.node_mut(idx)
     }
 
     /// Deprecated: Use [`node_info`](Self::node_info) instead.
-    #[deprecated(since = "0.8.0", note = "renamed to `node_info` per Rust API guidelines")]
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `node_info` per Rust API guidelines"
+    )]
     #[must_use]
     pub fn get_node_info(&self, idx: NodeId) -> Option<&Node<T>> {
         self.node_info(idx)
     }
 
     /// Deprecated: Use [`node_info_mut`](Self::node_info_mut) instead.
-    #[deprecated(since = "0.8.0", note = "renamed to `node_info_mut` per Rust API guidelines")]
+    #[deprecated(
+        since = "0.8.0",
+        note = "renamed to `node_info_mut` per Rust API guidelines"
+    )]
     pub fn get_node_info_mut(&mut self, idx: NodeId) -> Option<&mut Node<T>> {
         self.node_info_mut(idx)
     }

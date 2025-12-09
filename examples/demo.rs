@@ -7,8 +7,8 @@ use egui::{Color32, Id, Modifiers, PointerButton, Ui};
 use egui_snarl::{
     InPin, InPinId, NodeId, OutPin, OutPinId, Snarl,
     ui::{
-        AnyPins, ModifierClick, NodeLayout, PinInfo, PinPlacement, SnarlConfig, SnarlStyle,
-        SnarlViewer, SnarlWidget, WireStyle, get_selected_nodes,
+        AnyPins, ModifierClick, NodeLayout, PinContext, PinInfo, PinPlacement, SnarlConfig,
+        SnarlStyle, SnarlViewer, SnarlWidget, WireStyle, selected_nodes,
     },
 };
 
@@ -177,21 +177,31 @@ impl SnarlViewer<DemoNode> for DemoViewer {
 
     #[allow(clippy::too_many_lines)]
     #[allow(refining_impl_trait)]
-    fn show_input(&mut self, pin: &InPin, ui: &mut Ui, snarl: &mut Snarl<DemoNode>) -> PinInfo {
+    fn show_input(
+        &mut self,
+        pin: &InPin,
+        ui: &mut Ui,
+        context: PinContext,
+        snarl: &mut Snarl<DemoNode>,
+    ) -> PinInfo {
         match snarl[pin.id.node] {
             DemoNode::Sink => {
                 assert_eq!(pin.id.input, 0, "Sink node has only one input");
 
                 match &*pin.remotes {
                     [] => {
-                        ui.label("None");
+                        if context.label_visible {
+                            ui.label("None");
+                        }
                         PinInfo::circle().with_fill(UNTYPED_COLOR)
                     }
                     [remote] => match snarl[remote.node] {
                         DemoNode::Sink => unreachable!("Sink node has no outputs"),
                         DemoNode::Number(value) => {
                             assert_eq!(remote.output, 0, "Number node has only one output");
-                            ui.label(format_float(value));
+                            if context.label_visible {
+                                ui.label(format_float(value));
+                            }
                             PinInfo::circle().with_fill(NUMBER_COLOR)
                         }
                         DemoNode::String(ref value) => {
@@ -385,7 +395,13 @@ impl SnarlViewer<DemoNode> for DemoViewer {
     }
 
     #[allow(refining_impl_trait)]
-    fn show_output(&mut self, pin: &OutPin, ui: &mut Ui, snarl: &mut Snarl<DemoNode>) -> PinInfo {
+    fn show_output(
+        &mut self,
+        pin: &OutPin,
+        ui: &mut Ui,
+        _context: PinContext,
+        snarl: &mut Snarl<DemoNode>,
+    ) -> PinInfo {
         match snarl[pin.id.node] {
             DemoNode::Sink => {
                 unreachable!("Sink node has no outputs")
@@ -506,7 +522,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
                 }
 
                 let src_pin = src_pins[0];
-                let src_out_ty = pin_out_compat(snarl.get_node(src_pin.node).unwrap());
+                let src_out_ty = pin_out_compat(snarl.node(src_pin.node).unwrap());
                 let dst_in_candidates = [
                     ("Sink", (|| DemoNode::Sink) as fn() -> DemoNode, PIN_SINK),
                     ("Show Image", || DemoNode::ShowImage(String::new()), PIN_STR),
@@ -530,7 +546,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
             }
             AnyPins::In(pins) => {
                 let all_src_types = pins.iter().fold(0, |acc, pin| {
-                    acc | pin_in_compat(snarl.get_node(pin.node).unwrap(), pin.input)
+                    acc | pin_in_compat(snarl.node(pin.node).unwrap(), pin.input)
                 });
 
                 let dst_out_candidates = [
@@ -559,7 +575,7 @@ impl SnarlViewer<DemoNode> for DemoViewer {
                         // Connect the wire.
                         for src_pin in pins {
                             let src_ty =
-                                pin_in_compat(snarl.get_node(src_pin.node).unwrap(), src_pin.input);
+                                pin_in_compat(snarl.node(src_pin.node).unwrap(), src_pin.input);
                             if src_ty & dst_ty != 0 {
                                 // In this demo, input pin MUST be unique ...
                                 // Therefore here we drop inputs of source input pin.
@@ -1046,7 +1062,7 @@ impl App for DemoApp {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.strong("Selected nodes");
 
-                let selected = get_selected_nodes(Id::new("snarl-demo"), ui.ctx());
+                let selected = selected_nodes(Id::new("snarl-demo"), ui.ctx());
 
                 let mut selected = selected
                     .into_iter()

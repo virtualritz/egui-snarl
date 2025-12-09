@@ -10,6 +10,7 @@ const MAX_CURVE_SAMPLES: usize = 100;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "egui-probe", derive(egui_probe::EguiProbe))]
+#[cfg_attr(feature = "facet", derive(facet::Facet), repr(u8))]
 #[derive(Default)]
 pub enum WireLayer {
     /// Wires are rendered behind nodes.
@@ -44,6 +45,7 @@ pub(crate) enum WireId {
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "egui-probe", derive(egui_probe::EguiProbe))]
+#[cfg_attr(feature = "facet", derive(facet::Facet), repr(u8))]
 #[derive(Default)]
 pub enum WireStyle {
     /// Straight line from one endpoint to another.
@@ -97,8 +99,8 @@ fn adjust_frame_size(
     frame_size
 }
 
-/// Returns 5th degree bezier curve control points for the wire
-fn wire_bezier_5(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 6] {
+/// Returns 5th degree bezier curve control points for horizontal wires (pins on left/right)
+fn wire_bezier_5_horizontal(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 6] {
     let from_norm_x = frame_size;
     let from_2 = pos2(from.x + from_norm_x, from.y);
     let to_norm_x = -from_norm_x;
@@ -222,9 +224,147 @@ fn wire_bezier_5(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 6] {
     }
 }
 
+/// Returns 5th degree bezier curve control points for vertical wires (pins on top/bottom).
+/// This creates Houdini-style connections where wires extend vertically from pins.
+fn wire_bezier_5_vertical(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 6] {
+    // For vertical wires, control points extend in Y direction instead of X
+    // from is typically output (top/bottom of node), to is typically input (top/bottom of another node)
+    let from_norm_y = frame_size;
+    let from_2 = pos2(from.x, from.y + from_norm_y);
+    let to_norm_y = -from_norm_y;
+    let to_2 = pos2(to.x, to.y + to_norm_y);
+
+    let between = (from_2 - to_2).length();
+
+    if from_2.y <= to_2.y && between >= frame_size * 2.0 {
+        // Simple case: from is above to, enough space for smooth curve
+        let middle_1 = from_2 + (to_2 - from_2).normalized() * frame_size;
+        let middle_2 = to_2 + (from_2 - to_2).normalized() * frame_size;
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if from_2.y <= to_2.y {
+        // from is above to, but close together
+        let t = (between - (to_2.x - from_2.x).abs())
+            / frame_size.mul_add(2.0, -(to_2.x - from_2.x).abs());
+
+        let mut middle_1 = from_2 + (to_2 - from_2).normalized() * frame_size;
+        let mut middle_2 = to_2 + (from_2 - to_2).normalized() * frame_size;
+
+        if from_2.x >= to_2.x + frame_size {
+            let u = (from_2.x - to_2.x - frame_size) / frame_size;
+
+            let t0_middle_1 = pos2(
+                frame_size.mul_add(-u, from_2.x),
+                (1.0 - u).mul_add(frame_size, from_2.y),
+            );
+            let t0_middle_2 = pos2(to_2.x + frame_size, to_2.y);
+
+            middle_1 = t0_middle_1.lerp(middle_1, t);
+            middle_2 = t0_middle_2.lerp(middle_2, t);
+        } else if from_2.x >= to_2.x {
+            let u = (from_2.x - to_2.x) / frame_size;
+
+            let t0_middle_1 = pos2(
+                frame_size.mul_add(1.0 - u, from_2.x),
+                u.mul_add(frame_size, from_2.y),
+            );
+            let t0_middle_2 = pos2(to_2.x + frame_size, to_2.y);
+
+            middle_1 = t0_middle_1.lerp(middle_1, t);
+            middle_2 = t0_middle_2.lerp(middle_2, t);
+        } else if to_2.x >= from_2.x + frame_size {
+            let u = (to_2.x - from_2.x - frame_size) / frame_size;
+
+            let t0_middle_1 = pos2(from_2.x + frame_size, from_2.y);
+            let t0_middle_2 = pos2(
+                frame_size.mul_add(-u, to_2.x),
+                (1.0 - u).mul_add(-frame_size, to_2.y),
+            );
+
+            middle_1 = t0_middle_1.lerp(middle_1, t);
+            middle_2 = t0_middle_2.lerp(middle_2, t);
+        } else if to_2.x >= from_2.x {
+            let u = (to_2.x - from_2.x) / frame_size;
+
+            let t0_middle_1 = pos2(from_2.x + frame_size, from_2.y);
+            let t0_middle_2 = pos2(
+                frame_size.mul_add(1.0 - u, to_2.x),
+                u.mul_add(-frame_size, to_2.y),
+            );
+
+            middle_1 = t0_middle_1.lerp(middle_1, t);
+            middle_2 = t0_middle_2.lerp(middle_2, t);
+        } else {
+            unreachable!();
+        }
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if from_2.x >= frame_size.mul_add(2.0, to_2.x) {
+        // from is to the right, wrap around
+        let middle_1 = pos2(from_2.x - frame_size, from_2.y);
+        let middle_2 = pos2(to_2.x + frame_size, to_2.y);
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if from_2.x >= to_2.x + frame_size {
+        let t = (from_2.x - to_2.x - frame_size) / frame_size;
+
+        let middle_1 = pos2(
+            frame_size.mul_add(-t, from_2.x),
+            (1.0 - t).mul_add(frame_size, from_2.y),
+        );
+        let middle_2 = pos2(to_2.x + frame_size, to_2.y);
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if from_2.x >= to_2.x {
+        let t = (from_2.x - to_2.x) / frame_size;
+
+        let middle_1 = pos2(
+            frame_size.mul_add(1.0 - t, from_2.x),
+            t.mul_add(frame_size, from_2.y),
+        );
+        let middle_2 = pos2(to_2.x + frame_size, to_2.y);
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if to_2.x >= frame_size.mul_add(2.0, from_2.x) {
+        // to is to the right
+        let middle_1 = pos2(from_2.x + frame_size, from_2.y);
+        let middle_2 = pos2(to_2.x - frame_size, to_2.y);
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if to_2.x >= from_2.x + frame_size {
+        let t = (to_2.x - from_2.x - frame_size) / frame_size;
+
+        let middle_1 = pos2(from_2.x + frame_size, from_2.y);
+        let middle_2 = pos2(
+            frame_size.mul_add(-t, to_2.x),
+            (1.0 - t).mul_add(-frame_size, to_2.y),
+        );
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else if to_2.x >= from_2.x {
+        let t = (to_2.x - from_2.x) / frame_size;
+
+        let middle_1 = pos2(from_2.x + frame_size, from_2.y);
+        let middle_2 = pos2(
+            frame_size.mul_add(1.0 - t, to_2.x),
+            t.mul_add(-frame_size, to_2.y),
+        );
+
+        [from, from_2, middle_1, middle_2, to_2, to]
+    } else {
+        unreachable!();
+    }
+}
+
 /// Returns 3rd degree bezier curve control points for the wire
 fn wire_bezier_3(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 4] {
-    let [a, b, _, _, c, d] = wire_bezier_5(frame_size, from, to);
+    let [a, b, _, _, c, d] = wire_bezier_5_horizontal(frame_size, from, to);
+    [a, b, c, d]
+}
+
+/// Returns 3rd degree bezier curve control points for vertical wires
+fn wire_bezier_3_vertical(frame_size: f32, from: Pos2, to: Pos2) -> [Pos2; 4] {
+    let [a, b, _, _, c, d] = wire_bezier_5_vertical(frame_size, from, to);
     [a, b, c, d]
 }
 
@@ -241,6 +381,7 @@ pub fn draw_wire(
     mut stroke: Stroke,
     threshold: f32,
     style: WireStyle,
+    vertical: bool,
 ) {
     if !ui.is_visible() {
         return;
@@ -258,6 +399,7 @@ pub fn draw_wire(
         from,
         to,
         radius: 0.0,
+        vertical,
     };
 
     match style {
@@ -297,6 +439,7 @@ pub fn hit_wire(
     pos: Pos2,
     hit_threshold: f32,
     style: WireStyle,
+    vertical: bool,
 ) -> bool {
     let frame_size = adjust_frame_size(frame_size, upscale, downscale, from, to);
 
@@ -305,6 +448,7 @@ pub fn hit_wire(
         from,
         to,
         radius: 0.0,
+        vertical,
     };
 
     match style {
@@ -484,6 +628,7 @@ struct WireArgs {
     from: Pos2,
     to: Pos2,
     radius: f32,
+    vertical: bool,
 }
 
 impl Default for WireArgs {
@@ -493,6 +638,7 @@ impl Default for WireArgs {
             from: Pos2::ZERO,
             to: Pos2::ZERO,
             radius: 0.0,
+            vertical: false,
         }
     }
 }
@@ -694,7 +840,11 @@ impl WiresCache {
             return cached;
         }
 
-        let points = wire_bezier_3(args.frame_size, args.from, args.to);
+        let points = if args.vertical {
+            wire_bezier_3_vertical(args.frame_size, args.from, args.to)
+        } else {
+            wire_bezier_3(args.frame_size, args.from, args.to)
+        };
         let aabb = Rect::from_points(&points);
 
         cached.args = args;
@@ -714,7 +864,11 @@ impl WiresCache {
             return cached;
         }
 
-        let points = wire_bezier_5(args.frame_size, args.from, args.to);
+        let points = if args.vertical {
+            wire_bezier_5_vertical(args.frame_size, args.from, args.to)
+        } else {
+            wire_bezier_5_horizontal(args.frame_size, args.from, args.to)
+        };
         let aabb = Rect::from_points(&points);
 
         cached.args = args;
